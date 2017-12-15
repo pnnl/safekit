@@ -1,0 +1,395 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>util &mdash; safekit 0.01 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="safekit 0.01 documentation" href="index.html"/>
+        <link rel="next" title="models" href="models.html"/>
+        <link rel="prev" title="graph_training_utils" href="graph_training_utils.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> safekit
+          
+
+          
+            
+            <img src="_static/pnnl.jpg" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.01
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tf_ops.html">tf_ops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="batch.html">batch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph_training_utils.html">graph_training_utils</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">util</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="models.html">models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">features</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">safekit</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>util</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/util.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-util">
+<span id="util"></span><h1>util<a class="headerlink" href="#module-util" title="Permalink to this headline">¶</a></h1>
+<p>Python and numpy functions.</p>
+<dl class="class">
+<dt id="util.ExponentialRunningMean">
+<em class="property">class </em><code class="descclassname">util.</code><code class="descname">ExponentialRunningMean</code><span class="sig-paren">(</span><em>alpha=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/util.html#ExponentialRunningMean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#util.ExponentialRunningMean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the running mean of row vectors batchwise given a sequence of matrices.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>alpha</strong> – (float)  Higher alpha discounts older observations faster.
+The smaller the alpha, the further you take into consideration the past.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="util.ExponentialRunningMean.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><em>samples</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/util.html#ExponentialRunningMean.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#util.ExponentialRunningMean.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>samples</strong> – a matrix of samples to incorporate into running mean</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">running average over axis</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="util.Parser">
+<em class="property">class </em><code class="descclassname">util.</code><code class="descname">Parser</code><span class="sig-paren">(</span><em>prog=None</em>, <em>usage=None</em>, <em>description=None</em>, <em>epilog=None</em>, <em>version=None</em>, <em>parents=[]</em>, <em>formatter_class=&lt;class 'argparse.HelpFormatter'&gt;</em>, <em>prefix_chars='-'</em>, <em>fromfile_prefix_chars=None</em>, <em>argument_default=None</em>, <em>conflict_handler='error'</em>, <em>add_help=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/util.html#Parser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#util.Parser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hack for Sphinx documentation of scripts to work correctly.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="util.RunningMean">
+<em class="property">class </em><code class="descclassname">util.</code><code class="descname">RunningMean</code><span class="sig-paren">(</span><em>axis=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/util.html#RunningMean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#util.RunningMean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the batchwise running mean from rows, columns, or values of a matrix.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>axis</strong> – The axis to calculate the running mean over. If axis==None then the running mean for the entire array is taken.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="util.RunningMean.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><em>samples</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/util.html#RunningMean.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#util.RunningMean.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>samples</strong> – a matrix of samples to incorporate into running mean</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">running average over axis</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="util.get_mask">
+<code class="descclassname">util.</code><code class="descname">get_mask</code><span class="sig-paren">(</span><em>lens</em>, <em>num_tokens</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/util.html#get_mask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#util.get_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>For masking output of lm_rnn for jagged sequences for correct gradient update.
+Sequence length of 0 will output nan for that row of mask so don’t do this.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>lens</strong> – Numpy vector of sequence lengths</li>
+<li><strong>num_tokens</strong> – (int) Number of predicted tokens in sentence.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><p>A numpy array mask MB X num_tokens
+For each row there are: lens[i] values of 1/lens[i]</p>
+<blockquote>
+<div><p>followed by num_tokens - lens[i] zeros</p>
+</div></blockquote>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="util.get_multivariate_loss_names">
+<code class="descclassname">util.</code><code class="descname">get_multivariate_loss_names</code><span class="sig-paren">(</span><em>loss_spec</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/util.html#get_multivariate_loss_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#util.get_multivariate_loss_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>For use in conjunction with <cite>tf_ops.multivariate_loss</cite>. Gives the names of all contributors (columns) of the loss matrix.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>loss_spec</strong> – A list of 3-tuples of the form (input_name, loss_function, dimension) where
+input_name is the same as a target in datadict,
+loss_function takes two parameters, a target and prediction,
+and dimension is the dimension of the target.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">loss_names is a list concatenated_feature_size long with names of all loss contributors.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="util.make_feature_spec">
+<code class="descclassname">util.</code><code class="descname">make_feature_spec</code><span class="sig-paren">(</span><em>dataspec</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/util.html#make_feature_spec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#util.make_feature_spec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes lists of all the continuous and categorical features to be used as input features of a neural network.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dataspec</strong> – (dict) From a json specification of the purpose of fields in the csv input file (See docs for formatting)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">(dict) features {‘categorical’: [categorical_feature_1, …, categorical_feature_j],
+‘continuous’: [continuous_feature_1, …, continuous_feature_k]}</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="util.make_loss_spec">
+<code class="descclassname">util.</code><code class="descname">make_loss_spec</code><span class="sig-paren">(</span><em>dataspec</em>, <em>mvn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/util.html#make_loss_spec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#util.make_loss_spec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes a list of tuples for each target to be used in training a multiple output neural network modeling a
+mixed joint distribution of discrete and continuous variables.
+:param dataspec: (dict) From a json specification of the purpose of fields in the csv input file (See docs for formatting)
+:param mvn: Tensorflow function for calculating type of multivariate loss for continuous target vectors.</p>
+<blockquote>
+<div>Can be tf_ops.diag_mvn_loss, tf_ops.full_mvn_loss, tf_ops.eyed_mvn_loss</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A list of tuples of the form: (target_name, loss_function, dimension) where dimension
+is the dimension of the target vector (for categorical features this is the number of classes, for continuous
+targets this is the size of the continuous target vector)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="models.html" class="btn btn-neutral float-right" title="models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="graph_training_utils.html" class="btn btn-neutral" title="graph_training_utils" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Batelle Memorial Institute.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.01',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

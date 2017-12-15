@@ -1,0 +1,724 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Network Language Models &mdash; safekit 0.01 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="safekit 0.01 documentation" href="index.html"/>
+        <link rel="up" title="models" href="models.html"/>
+        <link rel="next" title="features" href="features.html"/>
+        <link rel="prev" title="Aggregate Multivariate Autoencoders" href="agg.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> safekit
+          
+
+          
+            
+            <img src="_static/pnnl.jpg" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.01
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="tf_ops.html">tf_ops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="batch.html">batch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph_training_utils.html">graph_training_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">util</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="models.html">models</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="agg.html">Aggregate Multivariate Autoencoders</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Network Language Models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#simple-lm">simple_lm</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#file-name-convention">File name convention:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stdout">stdout</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#file-output">File output:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#example-calls">Example calls</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#input-data">Input Data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#command-line">Command line</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#tiered-lm">tiered_lm</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#example-command-for-running-a-model-configuration">Example Command for running a model configuration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id1">File name convention:</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id2">stdout</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">File output</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id4">Input Data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id5">Command line</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">features</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">safekit</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="models.html">models</a> &raquo;</li>
+        
+      <li>Network Language Models</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/lm.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="network-language-models">
+<h1>Network Language Models<a class="headerlink" href="#network-language-models" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="simple-lm">
+<h2>simple_lm<a class="headerlink" href="#simple-lm" title="Permalink to this headline">¶</a></h2>
+<img alt="_images/simple.png" src="_images/simple.png" />
+<span class="target" id="module-simple_lm"></span><p>Simple language model code for network modeling.</p>
+<div class="section" id="file-name-convention">
+<h3>File name convention:<a class="headerlink" href="#file-name-convention" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>lr: learnrate for gradient descent</li>
+<li>nl: number of stacked lstm layers</li>
+<li>hs: size of hidden layers (presumes all layers have same number of hidden units)</li>
+<li>mb: Size of mini-batch</li>
+<li>bc: max bad count for early stopping</li>
+<li>em: Size of token embeddings</li>
+<li>rs: Random seed for reproducible results</li>
+</ul>
+</div>
+<div class="section" id="stdout">
+<h3>stdout<a class="headerlink" href="#stdout" title="Permalink to this headline">¶</a></h3>
+<p>For each mini-batch the following is printed to standard output</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">batchsize</span> <span class="n">line_number</span> <span class="n">second</span> <span class="n">status</span> <span class="n">filename</span> <span class="n">index</span> <span class="n">current_loss</span>
+</pre></div>
+</div>
+<p>Where:</p>
+<ul class="simple">
+<li>batchsize: The size of the mini-batch</li>
+<li>line_number: Line number from original auth.txt file (may be off by 1)</li>
+<li>second: The second of the first event in the mini-batch</li>
+<li>status: Whether the model is updating or merely forward propagating</li>
+<li>filename: The current file being processed</li>
+<li>index: The number of samples processed to date</li>
+<li>current_loss: The average loss over the mini-batch</li>
+</ul>
+</div>
+<div class="section" id="file-output">
+<h3>File output:<a class="headerlink" href="#file-output" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">batch_num</span> <span class="n">line</span> <span class="n">second</span> <span class="n">day</span> <span class="n">user</span> <span class="n">red</span> <span class="n">loss</span>
+</pre></div>
+</div>
+<p>Where:</p>
+<ul class="simple">
+<li>batch_num: The mini-batch this event was a part of</li>
+<li>line: Line number from original auth.txt file (may be off by 1)</li>
+<li>second: The second which the event occurred on</li>
+<li>day: The day the event occurred on</li>
+<li>user: The user who performed the event</li>
+<li>red: Whether this event was a labeled red team activity (1 for red team activity 0 otherwise)</li>
+<li>loss: The anomaly score for this event</li>
+</ul>
+</div>
+<div class="section" id="example-calls">
+<h3>Example calls<a class="headerlink" href="#example-calls" title="Permalink to this headline">¶</a></h3>
+<p><strong>Simple character based language model.</strong></p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">safekit</span><span class="o">/</span><span class="n">models</span><span class="o">/</span><span class="n">simple_lm</span><span class="o">.</span><span class="n">py</span> <span class="n">results</span><span class="o">/</span> <span class="n">safekit</span><span class="o">/</span><span class="n">features</span><span class="o">/</span><span class="n">specs</span><span class="o">/</span><span class="n">lm</span><span class="o">/</span><span class="n">lanl_char_config</span><span class="o">.</span><span class="n">json</span> <span class="n">data_examples</span><span class="o">/</span><span class="n">lanl</span><span class="o">/</span><span class="n">lm_feats</span><span class="o">/</span><span class="n">raw_day_split</span><span class="o">/</span> <span class="o">-</span><span class="n">test</span> <span class="o">-</span><span class="n">skipsos</span> <span class="o">-</span><span class="n">jagged</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The output results will be printed to /tmp/lanl_result/ and then moved to results/ upon completion
+to avoid experiment slowdown of constant network traffic when using a distributed file system.</p>
+</div>
+</div>
+<div class="section" id="input-data">
+<h3>Input Data<a class="headerlink" href="#input-data" title="Permalink to this headline">¶</a></h3>
+<p>The format of the input makes the following assumptions:</p>
+<ul>
+<li><p class="first">Input files are together in datafolder, one file for each day.</p>
+</li>
+<li><p class="first">Input files are plain text files with one line of integers per log line representing meta data and the tokens from log text.</p>
+</li>
+<li><p class="first">Input format for fixed length sequences</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">line_nums</span> <span class="n">second</span> <span class="n">day</span> <span class="n">user</span> <span class="n">red</span> <span class="n">logtokenid1</span> <span class="o">....</span> <span class="n">logtokenid_SentenceLen</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Zero paded Input format for jagged sequences</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">line_nums</span> <span class="n">second</span> <span class="n">day</span> <span class="n">user</span> <span class="n">red</span> <span class="n">SentenceLen</span> <span class="n">logtokenid1</span> <span class="o">....</span> <span class="n">logtokenid_SentenceLen</span> <span class="mi">0</span> <span class="mi">0</span> <span class="o">....</span> <span class="mi">0</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<dl class="function">
+<dt id="simple_lm.return_parser">
+<code class="descclassname">simple_lm.</code><code class="descname">return_parser</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/simple_lm.html#return_parser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#simple_lm.return_parser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines and returns argparse ArgumentParser object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">ArgumentParser</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="simple_lm.write_results">
+<code class="descclassname">simple_lm.</code><code class="descname">write_results</code><span class="sig-paren">(</span><em>datadict</em>, <em>pointloss</em>, <em>outfile</em>, <em>batch</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/simple_lm.html#write_results"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#simple_lm.write_results" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes loss for each datapoint, along with meta-data to file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>datadict</strong> – Dictionary of data names (str) keys to numpy matrix values for this mini-batch.</li>
+<li><strong>pointloss</strong> – MB X 1 numpy array</li>
+<li><strong>outfile</strong> – Where to write results.</li>
+<li><strong>batch</strong> – The mini-batch number for these events.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="command-line">
+<h3>Command line<a class="headerlink" href="#command-line" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">simple_lm</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">learnrate</span> <span class="n">LEARNRATE</span><span class="p">]</span>
+                 <span class="p">[</span><span class="o">-</span><span class="n">lm_layers</span> <span class="n">LM_LAYERS</span> <span class="p">[</span><span class="n">LM_LAYERS</span> <span class="o">...</span><span class="p">]]</span>
+                 <span class="p">[</span><span class="o">-</span><span class="n">context_layers</span> <span class="n">CONTEXT_LAYERS</span> <span class="p">[</span><span class="n">CONTEXT_LAYERS</span> <span class="o">...</span><span class="p">]]</span>
+                 <span class="p">[</span><span class="o">-</span><span class="n">numsteps</span> <span class="n">NUMSTEPS</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">mb</span> <span class="n">MB</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">debug</span><span class="p">]</span>
+                 <span class="p">[</span><span class="o">-</span><span class="n">maxbadcount</span> <span class="n">MAXBADCOUNT</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">em</span> <span class="n">EM</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">encoding</span> <span class="n">ENCODING</span><span class="p">]</span>
+                 <span class="p">[</span><span class="o">-</span><span class="n">random_seed</span> <span class="n">RANDOM_SEED</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">jagged</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">skipsos</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">bidir</span><span class="p">]</span>
+                 <span class="p">[</span><span class="o">-</span><span class="n">test</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">verbose</span> <span class="n">VERBOSE</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">delimiter</span> <span class="n">DELIMITER</span><span class="p">]</span>
+                 <span class="p">[</span><span class="o">-</span><span class="n">cell_type</span> <span class="n">CELL_TYPE</span><span class="p">]</span>
+                 <span class="n">results_folder</span> <span class="n">config</span> <span class="n">datafolder</span>
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>Positional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd>results_folder</kbd></td>
+<td>The folder to print results to.</td></tr>
+<tr><td class="option-group">
+<kbd>config</kbd></td>
+<td>The data spec.</td></tr>
+<tr><td class="option-group">
+<kbd>datafolder</kbd></td>
+<td>The folder where the data is stored.</td></tr>
+</tbody>
+</table>
+</dd>
+<dt>Options:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-learnrate=0.001</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Step size for gradient descent.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-lm_layers=[10]</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>A list of hidden layer sizes.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-context_layers=[10]</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>decoy arg.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-numsteps=10</span></kbd></td>
+<td>decoy arg.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-mb=128</span></kbd></td>
+<td>The mini batch size for stochastic gradient descent.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-debug=False</span></kbd></td>
+<td>Use this flag to print feed dictionary contents and dimensions.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-maxbadcount=20</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Threshold for early stopping.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-em=20</span></kbd></td>
+<td>Size of embeddings for categorical features.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-encoding</span></kbd></td>
+<td>Can be “oct”, “raw” or “word”</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-random_seed=5</span></kbd></td>
+<td>Random seed for reproducible experiments.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-jagged=False</span></kbd></td>
+<td>Whether using sequences of variable length (Input shouldbe zero-padded to max_sequence_length.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-skipsos=False</span></kbd></td>
+<td>Whether to skip a start of sentence token.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-bidir=False</span></kbd></td>
+<td>Whether to use bidirectional lstm for lower tier.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-test=False</span></kbd></td>
+<td>Whether to run on a subset of the data (5000 lines from days 1,2,3) or the entire set.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-verbose=1</span></kbd></td>
+<td>Whether to print loss during training.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-delimiter=,</span></kbd></td>
+<td>Delimiter for input text file. You should be using ‘ ‘ for the dayshuffled cert.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-cell_type=lstm</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Can be either “lstm”, “ident_ran”, or “ran”</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="tiered-lm">
+<h2>tiered_lm<a class="headerlink" href="#tiered-lm" title="Permalink to this headline">¶</a></h2>
+<img alt="_images/tiered.png" src="_images/tiered.png" />
+<span class="target" id="module-tiered_lm"></span><p>This is a two tiered language model for anomaly detection, where the second tier LSTM (log line level)
+takes the concatenation of the average sentence vector and final hidden state
+from the lower tier (token level) LSTM as input, creating a new context vector and hidden state
+for the given user.</p>
+<div class="section" id="example-command-for-running-a-model-configuration">
+<h3>Example Command for running a model configuration<a class="headerlink" href="#example-command-for-running-a-model-configuration" title="Permalink to this headline">¶</a></h3>
+<p><strong>Raw (character token) tiered model</strong> (The jagged parameter lets the model know there are variable length sequences)</p>
+<p>python safekit/models/tiered_lm.py results/ safekit/features/specs/lm/lanl_char_config.json data_examples/lanl/lm_feats/raw_day_split/ -test -skipsos -jagged</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The output results will be printed to /tmp/lanl_result/ and then moved to results/ upon completion
+to avoid experiment slowdown of constant network traffic.</p>
+</div>
+</div>
+<div class="section" id="id1">
+<h3>File name convention:<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>em: embedding size for token embedding</li>
+<li>ns: number of loglines per user per mini-batch for trunctated back propagation through time</li>
+<li>mb: Minibatch size (mini-batch over users)</li>
+<li>lr: learnrate (step size for gradient descent)</li>
+<li>cl: context layers (number of hidden layers for top level (log line level) context rnn)</li>
+<li>lml: language model layers (number of hidden layers for the bottom level, token level, rnn)</li>
+<li>rs: random seed for reproducible results</li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h3>stdout<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>For each mini-batch the following is printed to standard output</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">batchsize</span> <span class="n">line_number</span> <span class="n">second</span> <span class="n">status</span> <span class="n">filename</span> <span class="n">index</span> <span class="n">current_loss</span>
+</pre></div>
+</div>
+<p>Where:</p>
+<ul class="simple">
+<li>batchsize: The size of the mini-batch</li>
+<li>line_number: Line number from original auth.txt file (may be off by 1)</li>
+<li>second: The second of the first event in the mini-batch</li>
+<li>status: Whether the model is updating or merely forward propagating</li>
+<li>filename: The current file being processed</li>
+<li>index: The number of samples processed to date</li>
+<li>current_loss: The average loss over the mini-batch</li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h3>File output<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">batch_num</span> <span class="n">line</span> <span class="n">second</span> <span class="n">day</span> <span class="n">user</span> <span class="n">red</span> <span class="n">loss</span>
+</pre></div>
+</div>
+<p>Where:</p>
+<ul class="simple">
+<li>batch_num: The mini-batch this event was a part of</li>
+<li>line: Line number from original auth.txt file (may be off by 1)</li>
+<li>second: The second which the event occurred on</li>
+<li>day: The day the event occurred on</li>
+<li>user: The user who performed the event</li>
+<li>red: Whether this event was a labeled red team activity (1 for red team activity 0 otherwise)</li>
+<li>loss: The anomaly score for this event</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The runtime of the experiment is also printed to a file called runtimes.txt at the end of training</p>
+</div>
+</div>
+<div class="section" id="id4">
+<h3>Input Data<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>The format of the input makes the following assumptions:</p>
+<ul>
+<li><p class="first">Input files are together in datafolder, one file for each day.</p>
+</li>
+<li><p class="first">Input files are plain text files with one line of integers per log line representing meta data and the tokens from log text.</p>
+</li>
+<li><p class="first">Input format for fixed length sequences</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">line_nums</span> <span class="n">second</span> <span class="n">day</span> <span class="n">user</span> <span class="n">red</span> <span class="n">logtokenid1</span> <span class="o">....</span> <span class="n">logtokenid_SentenceLen</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Zero paded Input format for jagged sequences</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">line_nums</span> <span class="n">second</span> <span class="n">day</span> <span class="n">user</span> <span class="n">red</span> <span class="n">SentenceLen</span> <span class="n">logtokenid1</span> <span class="o">....</span> <span class="n">logtokenid_SentenceLen</span> <span class="mi">0</span> <span class="mi">0</span> <span class="o">....</span> <span class="mi">0</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<dl class="class">
+<dt id="tiered_lm.ContextRNN">
+<em class="property">class </em><code class="descclassname">tiered_lm.</code><code class="descname">ContextRNN</code><span class="sig-paren">(</span><em>layers</em>, <em>initial_state</em>, <em>cell=&lt;class 'tensorflow.python.ops.rnn_cell_impl.LSTMCell'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tiered_lm.html#ContextRNN"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tiered_lm.ContextRNN" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log line level LSTM cell that keeps track of it’s last lstm state tuple</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>layers</strong> – List of hidden layer sizes.</li>
+<li><strong>initial_state</strong> – List of numlayers lists of tensors (cell_state, hidden_state),
+or List of lstm state tuples (which are named tuples of tensors (c=cell_state, h=hidden_state)</li>
+<li><strong>cell</strong> – Type of rnn cell to use.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tiered_lm.return_parser">
+<code class="descclassname">tiered_lm.</code><code class="descname">return_parser</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tiered_lm.html#return_parser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tiered_lm.return_parser" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="tiered_lm.tiered_lm">
+<code class="descclassname">tiered_lm.</code><code class="descname">tiered_lm</code><span class="sig-paren">(</span><em>token_set_size</em>, <em>embedding_size</em>, <em>ph_dict</em>, <em>context_layers</em>, <em>lm_layers</em>, <em>numsteps</em>, <em>bidir=False</em>, <em>jagged=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tiered_lm.html#tiered_lm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tiered_lm.tiered_lm" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>token_set_size</strong> – (int) Number of unique tokens in token set</li>
+<li><strong>embedding_size</strong> – (int) Dimensionality of token embeddings</li>
+<li><strong>ph_dict</strong> – dictionary of tensorflow placeholders and lists of tensorflow placeholders</li>
+<li><strong>context_layers</strong> – List of hidden layer sizes for stacked context LSTM</li>
+<li><strong>lm_layers</strong> – list of hidden layer sizes for stacked sentence LSTM</li>
+<li><strong>numsteps</strong> – How many steps (log lines) to unroll the upper tier RNN</li>
+<li><strong>bidir</strong> – Whether to use bidirectional LSTM for lower tier model</li>
+<li><strong>jagged</strong> – Whether or not variable length sequences are used</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">total_loss (scalar tensor),
+context_vector (tensor),
+line_loss_matrix (tensor), Losses for each line in mini-batch
+context_state (LSTMStateTuple) Final state of upper tier model</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="id5">
+<h3>Command line<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">tiered_lm</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">encoding</span> <span class="n">ENCODING</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">em</span> <span class="n">EM</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">numsteps</span> <span class="n">NUMSTEPS</span><span class="p">]</span>
+                 <span class="p">[</span><span class="o">-</span><span class="n">mb</span> <span class="n">MB</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">learnrate</span> <span class="n">LEARNRATE</span><span class="p">]</span>
+                 <span class="p">[</span><span class="o">-</span><span class="n">context_layers</span> <span class="n">CONTEXT_LAYERS</span> <span class="p">[</span><span class="n">CONTEXT_LAYERS</span> <span class="o">...</span><span class="p">]]</span>
+                 <span class="p">[</span><span class="o">-</span><span class="n">lm_layers</span> <span class="n">LM_LAYERS</span> <span class="p">[</span><span class="n">LM_LAYERS</span> <span class="o">...</span><span class="p">]]</span> <span class="p">[</span><span class="o">-</span><span class="n">debug</span><span class="p">]</span>
+                 <span class="p">[</span><span class="o">-</span><span class="n">random_seed</span> <span class="n">RANDOM_SEED</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">jagged</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">skipsos</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">bidir</span><span class="p">]</span>
+                 <span class="p">[</span><span class="o">-</span><span class="n">test</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">verbose</span> <span class="n">VERBOSE</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">delimiter</span> <span class="n">DELIMITER</span><span class="p">]</span>
+                 <span class="p">[</span><span class="o">-</span><span class="n">cell_type</span> <span class="n">CELL_TYPE</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">upper_cell_type</span> <span class="n">UPPER_CELL_TYPE</span><span class="p">]</span>
+                 <span class="n">results_folder</span> <span class="n">config</span> <span class="n">datafolder</span>
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>Positional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd>results_folder</kbd></td>
+<td>The folder to print results to.</td></tr>
+<tr><td class="option-group">
+<kbd>config</kbd></td>
+<td>The data spec.</td></tr>
+<tr><td class="option-group">
+<kbd>datafolder</kbd></td>
+<td>File with token features</td></tr>
+</tbody>
+</table>
+</dd>
+<dt>Options:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-encoding</span></kbd></td>
+<td>Can be “oct”, “raw” or “word”</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-em=5</span></kbd></td>
+<td>Dimension of token embeddings</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-numsteps=3</span></kbd></td>
+<td>length of unrolled context_rnn, number of log lines per user per train step</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-mb=64</span></kbd></td>
+<td>Number of users in mini-batch.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-learnrate=0.001</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Step size for gradient descent.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-context_layers=[10]</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>List of hidden layer sizes for context lstm.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-lm_layers=[5]</span></kbd></td>
+<td>List of hidden layer sizes for token lstm.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-debug=False</span></kbd></td>
+<td>Use this flag to print feed dictionary contents and dimensions.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-random_seed=5</span></kbd></td>
+<td>Random seed for reproducible experiments.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-jagged=False</span></kbd></td>
+<td>Whether using sequences of variable length (Input shouldbe zero-padded to max_sequence_length.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-skipsos=False</span></kbd></td>
+<td>Whether to skip a start of sentence token.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-bidir=False</span></kbd></td>
+<td>Whether to use bidirectional lstm for lower tier.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-test=False</span></kbd></td>
+<td>Whether to run on a subset of the data (5000 lines from days 1,2,3) or the entire set.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-verbose=1</span></kbd></td>
+<td>Whether to print loss during training.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-delimiter=,</span></kbd></td>
+<td>Delimiter for input text file</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-cell_type=lstm</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Can be either “lstm”, “ident_ran”, or “ran”</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-upper_cell_type=lstm</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Can be either “lstm”, “ident_ran”, or “ran”</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="features.html" class="btn btn-neutral float-right" title="features" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="agg.html" class="btn btn-neutral" title="Aggregate Multivariate Autoencoders" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Batelle Memorial Institute.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.01',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

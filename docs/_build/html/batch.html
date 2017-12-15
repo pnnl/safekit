@@ -1,0 +1,741 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>batch &mdash; safekit 0.01 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="safekit 0.01 documentation" href="index.html"/>
+        <link rel="next" title="graph_training_utils" href="graph_training_utils.html"/>
+        <link rel="prev" title="tf_ops" href="tf_ops.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> safekit
+          
+
+          
+            
+            <img src="_static/pnnl.jpg" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.01
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tf_ops.html">tf_ops</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">batch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph_training_utils.html">graph_training_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">util</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="models.html">models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">features</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">safekit</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>batch</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/batch.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-batch">
+<span id="batch"></span><h1>batch<a class="headerlink" href="#module-batch" title="Permalink to this headline">¶</a></h1>
+<p>Module for mini-batching data.</p>
+<dl class="class">
+<dt id="batch.DayBatcher">
+<em class="property">class </em><code class="descclassname">batch.</code><code class="descname">DayBatcher</code><span class="sig-paren">(</span><em>datafile</em>, <em>skiprow=0</em>, <em>delimiter='</em>, <em>'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#DayBatcher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.DayBatcher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gives batches from a csv file on a per day basis. The first field is assumed to be the day field.
+Days are assumed to be sorted in ascending order (No out of order days in csv file).
+For batching data too large to fit into memory. Written for one pass on data!!!</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>datafile</strong> – (str) File to read lines from.</li>
+<li><strong>skiprow</strong> – (int) How many lines to ignore at beginning of file (e.g. if file has a header)</li>
+<li><strong>delimiter</strong> – (str) The delimiter for the csv file</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="batch.DayBatcher.next_batch">
+<code class="descname">next_batch</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#DayBatcher.next_batch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.DayBatcher.next_batch" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(np.array) shape=(num_rows_in_a_day, len(csv_lines)).
+Until end of datafile, each time called,
+returns 2D array of consecutive lines with same day stamp.
+Returns None when no more data is available (one pass batcher!!).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="batch.NormalizingReplayOnlineBatcher">
+<em class="property">class </em><code class="descclassname">batch.</code><code class="descname">NormalizingReplayOnlineBatcher</code><span class="sig-paren">(</span><em>datafile</em>, <em>batch_size</em>, <em>skipheader=False</em>, <em>delimiter='</em>, <em>'</em>, <em>size_check=None</em>, <em>refresh_ratio=0.5</em>, <em>ratio=(1</em>, <em>0)</em>, <em>pool_size=5</em>, <em>alpha=0.5</em>, <em>datastart_index=3</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#NormalizingReplayOnlineBatcher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.NormalizingReplayOnlineBatcher" title="Permalink to this definition">¶</a></dt>
+<dd><p>For replay batching on aggregate DNN model.
+For batching data too large to fit into memory. Written for one pass on data!!!</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>datafile</strong> – File to read data from</li>
+<li><strong>batch_size</strong> – For mini-batching</li>
+<li><strong>skipheader</strong> – Use if there is a header on the data file</li>
+<li><strong>delimiter</strong> – Typically ‘ ‘ or ‘,’ which delimits columns in data file</li>
+<li><strong>size_check</strong> – Ignore this</li>
+<li><strong>refresh_ratio</strong> – The proportion of the new mini-batch to use in refreshing the pool.</li>
+<li><strong>ratio</strong> – (tuple) (num_new, num_replay) The batcher will provide num_new new batches of data points
+and then num_replay batches of old data points from the pool.</li>
+<li><strong>pool_size</strong> – The scale of the pool. The pool will be pool_size * batchsize data points.</li>
+<li><strong>alpha</strong> – (float)  For exponential running mean and variance.
+Lower alpha discounts older observations faster.
+The higher the alpha, the further you take into consideration the past.</li>
+<li><strong>datastart_index</strong> – The csv field where real valued features to be normalized begins.
+Assumed that all features beginnning at datastart_index till end of line
+are real valued.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="batch.NormalizingReplayOnlineBatcher.new_batch">
+<code class="descname">new_batch</code><span class="sig-paren">(</span><em>initialize=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#NormalizingReplayOnlineBatcher.new_batch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.NormalizingReplayOnlineBatcher.new_batch" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">until end of datafile, each time called,
+returns mini-batch number of lines from csv file
+as a numpy array. Returns shorter than mini-batch
+end of contents as a smaller than batch size array.
+Returns None when no more data is available(one pass batcher!!).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.NormalizingReplayOnlineBatcher.next_batch">
+<code class="descname">next_batch</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#NormalizingReplayOnlineBatcher.next_batch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.NormalizingReplayOnlineBatcher.next_batch" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="batch.NormalizingReplayOnlineBatcher.replay_batch">
+<code class="descname">replay_batch</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#NormalizingReplayOnlineBatcher.replay_batch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.NormalizingReplayOnlineBatcher.replay_batch" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="batch.OnlineBatcher">
+<em class="property">class </em><code class="descclassname">batch.</code><code class="descname">OnlineBatcher</code><span class="sig-paren">(</span><em>datafile</em>, <em>batch_size</em>, <em>skipheader=False</em>, <em>delimiter='</em>, <em>'</em>, <em>alpha=0.5</em>, <em>size_check=None</em>, <em>datastart_index=3</em>, <em>norm=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#OnlineBatcher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.OnlineBatcher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gives batches from a csv file.
+For batching data too large to fit into memory. Written for one pass on data!!!</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>datafile</strong> – (str) File to read lines from.</li>
+<li><strong>batch_size</strong> – (int) Mini-batch size.</li>
+<li><strong>skipheader</strong> – (bool) Whether or not to skip first line of file.</li>
+<li><strong>delimiter</strong> – (str) Delimiter of csv file.</li>
+<li><strong>alpha</strong> – (float)  For exponential running mean and variance.
+Lower alpha discounts older observations faster.
+The higher the alpha, the further you take into consideration the past.</li>
+<li><strong>size_check</strong> – (int) Expected number of fields from csv file. Used to check for data corruption.</li>
+<li><strong>datastart_index</strong> – (int) The csv field where real valued features to be normalized begins.
+Assumed that all features beginnning at datastart_index till end of line
+are real valued.</li>
+<li><strong>norm</strong> – (bool) Whether or not to normalize the real valued data features.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="batch.OnlineBatcher.next_batch">
+<code class="descname">next_batch</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#OnlineBatcher.next_batch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.OnlineBatcher.next_batch" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(np.array) until end of datafile, each time called,
+returns mini-batch number of lines from csv file
+as a numpy array. Returns shorter than mini-batch
+end of contents as a smaller than batch size array.
+Returns None when no more data is available(one pass batcher!!).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="batch.OnlineLMBatcher">
+<em class="property">class </em><code class="descclassname">batch.</code><code class="descname">OnlineLMBatcher</code><span class="sig-paren">(</span><em>datafile</em>, <em>initial_state_triple</em>, <em>batch_size=100</em>, <em>num_steps=5</em>, <em>delimiter=' '</em>, <em>skiprows=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#OnlineLMBatcher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.OnlineLMBatcher" title="Permalink to this definition">¶</a></dt>
+<dd><p>For use with tiered_lm.py. Batcher keeps track of user states in upper tier RNN.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>datafile</strong> – (str) CSV file to read data from.</li>
+<li><strong>initial_state_triple</strong> – (tuple) Initial state for users in lstm.</li>
+<li><strong>batch_size</strong> – (int) How many users in a mini-batch.</li>
+<li><strong>num_steps</strong> – (int) How many log lines to get for each user.</li>
+<li><strong>delimiter</strong> – (str) delimiter for csv file.</li>
+<li><strong>skiprows</strong> – (int) How many rows to skip at beginning of csv file.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="batch.OnlineLMBatcher.collect_stragglers">
+<code class="descname">collect_stragglers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#OnlineLMBatcher.collect_stragglers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.OnlineLMBatcher.collect_stragglers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Second stage flushing</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.OnlineLMBatcher.flush_batch">
+<code class="descname">flush_batch</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#OnlineLMBatcher.flush_batch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.OnlineLMBatcher.flush_batch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called when EOF is encountered. Returns either first stage flush batch or second stage flush batch.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.OnlineLMBatcher.get_batch_from_overflow">
+<code class="descname">get_batch_from_overflow</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#OnlineLMBatcher.get_batch_from_overflow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.OnlineLMBatcher.get_batch_from_overflow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called at beginning of each new batch to see if users have any premade matrix of events ready.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.OnlineLMBatcher.get_state_triples">
+<code class="descname">get_state_triples</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#OnlineLMBatcher.get_state_triples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.OnlineLMBatcher.get_state_triples" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(dict) Current states of users for all users in this mini-batch.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.OnlineLMBatcher.new_batch">
+<code class="descname">new_batch</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#OnlineLMBatcher.new_batch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.OnlineLMBatcher.new_batch" title="Permalink to this definition">¶</a></dt>
+<dd><p>First checks user_batch_overflow to see if there are user batches ready for the new mini-batch.
+Iterates over the file, adding user’s loglines to user_logs. When a user gets
+num_steps loglines, those num_steps loglines are added to the batch or if the user is already present
+in the batch to the user_batch_overflow. Now, when we have minibatch number of user batches, we return
+those as a batch. At most one user-batch for each user is allowed in a mini-batch</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.OnlineLMBatcher.next_batch">
+<code class="descname">next_batch</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#OnlineLMBatcher.next_batch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.OnlineLMBatcher.next_batch" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(tuple) (batch, state_triples) Where batch is a three way array and state_triples contains current user
+states for upper tier lstm. At beginning of file batch will be shape (batch_size X num_steps X num_feats).
+At end of file during first stage of flushing batch will be shape (num_unique_users X num_steps X num_feats).
+At end of file during second stage of flushing batch will be
+shape (min(batch_size X num_steps, num_unique_users) X num_feats).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.OnlineLMBatcher.update_state_triples">
+<code class="descname">update_state_triples</code><span class="sig-paren">(</span><em>new_triples</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#OnlineLMBatcher.update_state_triples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.OnlineLMBatcher.update_state_triples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called after training step of RNN to save current states of users.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>new_triples</strong> – (3-tuple) context_list = np.array shape=(users X context_rnn_hidden_size)
+state_list = list of np.arrays of shape=(users X context_rnn_hidden_size)
+hidden_list = Same type as state list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="batch.StateTrackingBatcher">
+<em class="property">class </em><code class="descclassname">batch.</code><code class="descname">StateTrackingBatcher</code><span class="sig-paren">(</span><em>pipe_name</em>, <em>specs</em>, <em>batchsize=21</em>, <em>num_steps=3</em>, <em>layers=10</em>, <em>replay_ratio=(1</em>, <em>0)</em>, <em>next_step=False</em>, <em>warm_start_state=None</em>, <em>delimiter='</em>, <em>'</em>, <em>skipheader=False</em>, <em>alpha=0.5</em>, <em>datastart_index=3</em>, <em>standardize=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#StateTrackingBatcher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.StateTrackingBatcher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aggregate RNN batcher. Reads line by line from a file or pipe being fed csv format features by a feature extractor.
+Keeps track of window of user history for truncated backpropagation through time with a shifting set of users.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>pipe_name</strong> – (str) Name of file or pipe to read from.</li>
+<li><strong>specs</strong> – (dict) From a json specification of the purpose of fields in the csv input file (See docs for formatting)</li>
+<li><strong>batchsize</strong> – (int) The maximum number of events in a mini-batch</li>
+<li><strong>num_steps</strong> – (int) The maximum number of events for any given user per mini-batch (window size sort of)</li>
+<li><strong>layers</strong> – (list) A list of the sizes of hidden layers for the stacked lstm.</li>
+<li><strong>replay_ratio</strong> – (tuple) (num_new_batches, num_replay_batches) Describes the ratio of new batches to replay batches.</li>
+<li><strong>next_step</strong> – (boolean) False (0) if autoencoding, True (1) if next time step prediction</li>
+<li><strong>warm_start_state</strong> – (tuple) Tuple of numpy arrays for warm_starting state of all users of RNN.</li>
+<li><strong>delimiter</strong> – (str) Delimiter of csv file.</li>
+<li><strong>skipheader</strong> – (bool) Whether or not to skip first line of csv file.</li>
+<li><strong>alpha</strong> – (float)  For exponential running mean and variance.
+Lower alpha discounts older observations faster.
+The higher the alpha, the further you take into consideration the past.</li>
+<li><strong>datastart_index</strong> – (int) The csv field where real valued features to be normalized begins.
+Assumed that all features beginnning at datastart_index till end of line
+are real valued.</li>
+<li><strong>standardize</strong> – (bool) Whether or not to standardize the data using running mean and variance.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="batch.StateTrackingBatcher.avg_state">
+<code class="descname">avg_state</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#StateTrackingBatcher.avg_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.StateTrackingBatcher.avg_state" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(list) The average of all the most recent states for each batch entity.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.StateTrackingBatcher.blank_slate">
+<code class="descname">blank_slate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#StateTrackingBatcher.blank_slate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.StateTrackingBatcher.blank_slate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates and returns a zero state for one time step for 1 user</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(list) A list of 1 X state_size numpy arrays the number of layers long</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.StateTrackingBatcher.event_padding_random">
+<code class="descname">event_padding_random</code><span class="sig-paren">(</span><em>rowtext</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#StateTrackingBatcher.event_padding_random"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.StateTrackingBatcher.event_padding_random" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates and returns a ‘non-event’ with random entries for event history padding of newly encountered user.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>rowtext</strong> – (int) A log line for the user</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">(np.array) A random event with user meta data attached.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.StateTrackingBatcher.get_eval_indices">
+<code class="descname">get_eval_indices</code><span class="sig-paren">(</span><em>key_map</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#StateTrackingBatcher.get_eval_indices"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.StateTrackingBatcher.get_eval_indices" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>key_map</strong> – (dict)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">(list) Data structure which keeps track of where to evaluate RNN.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.StateTrackingBatcher.get_events">
+<code class="descname">get_events</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#StateTrackingBatcher.get_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.StateTrackingBatcher.get_events" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(np.array)  3 way array of shape (num_time_steps, num_users, num_features)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.StateTrackingBatcher.get_new_events">
+<code class="descname">get_new_events</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#StateTrackingBatcher.get_new_events"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.StateTrackingBatcher.get_new_events" title="Permalink to this definition">¶</a></dt>
+<dd><p>To get new events when not replaying old events.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(int) 1 if not EOF 0 if EOF</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.StateTrackingBatcher.get_states">
+<code class="descname">get_states</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#StateTrackingBatcher.get_states"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.StateTrackingBatcher.get_states" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetches the saved RNN states of users in current mini-batch</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(list) List of user states.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.StateTrackingBatcher.make_key_map">
+<code class="descname">make_key_map</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#StateTrackingBatcher.make_key_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.StateTrackingBatcher.make_key_map" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(dict) For use in get_eval_indices.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.StateTrackingBatcher.new_batch">
+<code class="descname">new_batch</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#StateTrackingBatcher.new_batch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.StateTrackingBatcher.new_batch" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(dict) A dictionary with keys to match to placeholders and values of numpy matrices. Entries are described as follows:<ul class="simple">
+<li><strong>states</strong> A structured list of numpy arrays to feed as initial state for next round of training</li>
+<li><strong>inputs</strong> A three way numpy array of dimensions (timestep X user X (feature_size + target_size + meta_size)) where meta-size is the number of fields not used in training (user_id, timestamp, etc.)</li>
+<li><strong>eval_indices</strong> A num_time_steps long list of numpy vectors which contain the indices of hidden state outputs to evaluate on for each time step in this batch of training.</li>
+<li><strong>Other entries</strong> are split from the ‘inputs’ matrix using the specs dictionary which describes indices of matrices to extract.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.StateTrackingBatcher.next_batch">
+<code class="descname">next_batch</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#StateTrackingBatcher.next_batch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.StateTrackingBatcher.next_batch" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(dict) A dictionary of numpy arrays from splitting a
+3d (numsteps X mb_size X num_csv_fields) array into subarrays with keys pertaining to use in training.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.StateTrackingBatcher.package_data">
+<code class="descname">package_data</code><span class="sig-paren">(</span><em>batch</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#StateTrackingBatcher.package_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.StateTrackingBatcher.package_data" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>batch</strong> – (np.array) An assembled 3 way array of data collected from the stream with shape (num_time_steps, num_users, num_features)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">(dict) A dictionary of numpy arrays of the diced 3way feature array.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="batch.StateTrackingBatcher.replay">
+<code class="descname">replay</code><a class="headerlink" href="#batch.StateTrackingBatcher.replay" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether or not a replay batch was just processed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.StateTrackingBatcher.replay_batch">
+<code class="descname">replay_batch</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#StateTrackingBatcher.replay_batch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.StateTrackingBatcher.replay_batch" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(dict) A dictionary with keys to match to placeholders and values of numpy matrices. Entries are described as follows:<ul class="simple">
+<li><strong>states</strong> A structured list of numpy arrays to feed as initial state for next round of training</li>
+<li><strong>inputs</strong> A three way numpy array of dimensions (timestep X user X (feature_size + target_size + meta_size)) where meta-size is the number of fields not used in training (user_id, timestamp, etc.)</li>
+<li><strong>eval_indices</strong> A num_time_steps long list of numpy vectors which contain the indices of hidden state outputs to evaluate on for each time step in this batch of training.</li>
+<li><strong>Other entries</strong> are split from the ‘inputs’ matrix using the specs dictionary which describes indices of matrices to extract.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="batch.StateTrackingBatcher.update_states">
+<code class="descname">update_states</code><span class="sig-paren">(</span><em>states</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#StateTrackingBatcher.update_states"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.StateTrackingBatcher.update_states" title="Permalink to this definition">¶</a></dt>
+<dd><p>For updating the deque of lstm states for each user after a minibatch of training.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>states</strong> – (list) The unstructured list of state matrices evaluated after a train step.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="batch.split_batch">
+<code class="descclassname">batch.</code><code class="descname">split_batch</code><span class="sig-paren">(</span><em>batch</em>, <em>spec</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/batch.html#split_batch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batch.split_batch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Splits numpy matrix into separate data fields according to spec dictionary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>batch</strong> – (np.array) Array with shape=(batch_size, num_features) of data collected from stream.</li>
+<li><strong>spec</strong> – (dict) A python dict containing information about which indices in the incoming data point correspond to which features.
+Entries for continuous features list the indices for the feature, while entries for categorical features
+contain a dictionary- {‘index’: i, ‘num_classes’: c}, where i and c are the index into the datapoint,
+and number of distinct categories for the category in question.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">(dict) A dictionary of numpy arrays of the split 2d feature array.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="graph_training_utils.html" class="btn btn-neutral float-right" title="graph_training_utils" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="tf_ops.html" class="btn btn-neutral" title="tf_ops" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Batelle Memorial Institute.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.01',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

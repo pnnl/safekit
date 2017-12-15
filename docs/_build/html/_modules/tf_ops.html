@@ -1,0 +1,963 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>tf_ops &mdash; safekit 0.01 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="safekit 0.01 documentation" href="../index.html"/>
+        <link rel="up" title="Module code" href="index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> safekit
+          
+
+          
+            
+            <img src="../_static/pnnl.jpg" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.01
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../tf_ops.html">tf_ops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../batch.html">batch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../graph_training_utils.html">graph_training_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../util.html">util</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../features.html">features</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">safekit</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Module code</a> &raquo;</li>
+        
+      <li>tf_ops</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for tf_ops</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Functions for building tensorflow computational graph models.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">absolute_import</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">print_function</span>
+
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">from</span> <span class="nn">tensorflow.python.ops</span> <span class="k">import</span> <span class="n">nn</span>
+<span class="kn">from</span> <span class="nn">tensorflow.python.framework</span> <span class="k">import</span> <span class="n">tensor_shape</span>
+<span class="kn">from</span> <span class="nn">tensorflow.python.ops</span> <span class="k">import</span> <span class="n">array_ops</span>
+<span class="kn">from</span> <span class="nn">tensorflow.python.ops</span> <span class="k">import</span> <span class="n">math_ops</span>
+<span class="kn">from</span> <span class="nn">tensorflow.python.ops</span> <span class="k">import</span> <span class="n">rnn_cell</span>
+<span class="kn">from</span> <span class="nn">tensorflow.python.ops</span> <span class="k">import</span> <span class="n">rnn</span>
+<span class="kn">from</span> <span class="nn">tensorflow.python.ops</span> <span class="k">import</span> <span class="n">variable_scope</span> <span class="k">as</span> <span class="n">vs</span>
+
+<span class="c1"># So this will run without safekit installed</span>
+<span class="n">cyberpath</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">3</span><span class="p">])</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cyberpath</span><span class="p">)</span>
+
+<span class="c1"># TODO: Look at fixing magic number in full covariance loss</span>
+
+
+<div class="viewcode-block" id="fan_scale"><a class="viewcode-back" href="../tf_ops.html#tf_ops.fan_scale">[docs]</a><span class="k">def</span> <span class="nf">fan_scale</span><span class="p">(</span><span class="n">initrange</span><span class="p">,</span> <span class="n">activation</span><span class="p">,</span> <span class="n">tensor_in</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a scaling factor for weight initialization according to best practices.</span>
+
+<span class="sd">    :param initrange: Scaling in addition to fan_in scale.</span>
+<span class="sd">    :param activation: A tensorflow non-linear activation function</span>
+<span class="sd">    :param tensor_in: Input tensor to layer of network to scale weights for.</span>
+<span class="sd">    :return: (float) scaling factor for weight initialization.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">activation</span> <span class="o">==</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">:</span>
+        <span class="n">initrange</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">tensor_in</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">initrange</span> <span class="o">*=</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">tensor_in</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()[</span><span class="mi">1</span><span class="p">])))</span>
+    <span class="k">return</span> <span class="n">initrange</span></div>
+
+
+<div class="viewcode-block" id="ident"><a class="viewcode-back" href="../tf_ops.html#tf_ops.ident">[docs]</a><span class="k">def</span> <span class="nf">ident</span><span class="p">(</span><span class="n">tensor_in</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The identity function</span>
+
+<span class="sd">    :param tensor_in: Input to operation.</span>
+<span class="sd">    :return: tensor_in</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">tensor_in</span></div>
+
+
+<div class="viewcode-block" id="weights"><a class="viewcode-back" href="../tf_ops.html#tf_ops.weights">[docs]</a><span class="k">def</span> <span class="nf">weights</span><span class="p">(</span><span class="n">distribution</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">initrange</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span>
+            <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">l2</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;weights&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper parameterizing common constructions of tf.Variables.</span>
+
+<span class="sd">    :param distribution: A string identifying distribution &#39;tnorm&#39; for truncated normal, &#39;rnorm&#39; for random normal, &#39;constant&#39; for constant, &#39;uniform&#39; for uniform.</span>
+<span class="sd">    :param shape: Shape of weight tensor.</span>
+<span class="sd">    :param dtype: dtype for weights</span>
+<span class="sd">    :param initrange: Scales standard normal and trunctated normal, value of constant dist., and range of uniform dist. [-initrange, initrange].</span>
+<span class="sd">    :param seed: For reproducible results.</span>
+<span class="sd">    :param l2: Floating point number determining degree of of l2 regularization for these weights in gradient descent update.</span>
+<span class="sd">    :param name: For variable scope.</span>
+<span class="sd">    :return: A tf.Variable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s1">&#39;norm&#39;</span><span class="p">:</span>
+            <span class="n">wghts</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">initrange</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">random_normal</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">seed</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s1">&#39;tnorm&#39;</span><span class="p">:</span>
+            <span class="n">wghts</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">initrange</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">truncated_normal</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">seed</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s1">&#39;uniform&#39;</span><span class="p">:</span>
+            <span class="n">wghts</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">random_uniform</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="o">-</span><span class="n">initrange</span><span class="p">,</span> <span class="n">initrange</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">seed</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">distribution</span> <span class="o">==</span> <span class="s1">&#39;constant&#39;</span><span class="p">:</span>
+            <span class="n">wghts</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">initrange</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Argument &#39;distribution takes values &#39;norm&#39;, &#39;tnorm&#39;, &#39;uniform&#39;, &#39;constant&#39;, &quot;</span>
+                             <span class="s2">&quot;Received </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">distribution</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">l2</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">add_to_collection</span><span class="p">(</span><span class="s1">&#39;losses&#39;</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">l2_loss</span><span class="p">(</span><span class="n">wghts</span><span class="p">),</span> <span class="n">l2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;weight_loss&#39;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">wghts</span></div>
+
+
+<div class="viewcode-block" id="batch_normalize"><a class="viewcode-back" href="../tf_ops.html#tf_ops.batch_normalize">[docs]</a><span class="k">def</span> <span class="nf">batch_normalize</span><span class="p">(</span><span class="n">tensor_in</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="mf">0.999</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Batch Normalization:</span>
+<span class="sd">    `Batch Normalization Accelerating Deep Network Training by Reducing Internal Covariate Shift`_</span>
+
+<span class="sd">    An exponential moving average of means and variances in calculated to estimate sample mean</span>
+<span class="sd">    and sample variance for evaluations. For testing pair placeholder is_training</span>
+<span class="sd">    with [0] in feed_dict. For training pair placeholder is_training</span>
+<span class="sd">    with [1] in feed_dict. Example:</span>
+
+<span class="sd">    Let **train = 1** for training and **train = 0** for evaluation</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        bn_deciders = {decider:[train] for decider in tf.get_collection(&#39;bn_deciders&#39;)}</span>
+<span class="sd">        feed_dict.update(bn_deciders)</span>
+
+<span class="sd">    During training the running statistics are updated, and batch statistics are used for normalization.</span>
+<span class="sd">    During testing the running statistics are not updated, and running statistics are used for normalization.</span>
+
+<span class="sd">    :param tensor_in: (tf.Tensor) Input Tensor.</span>
+<span class="sd">    :param epsilon: (float) A float number to avoid being divided by 0.</span>
+<span class="sd">    :param decay: (float) For exponential decay estimate of running mean and variance.</span>
+<span class="sd">    :return: (tf.Tensor) Tensor with variance bounded by a unit and mean of zero according to the batch.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">is_training</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">])</span> <span class="c1"># [1] or [0], Using a placeholder to decide which</span>
+                                          <span class="c1"># statistics to use for normalization allows</span>
+                                          <span class="c1"># either the running stats or the batch stats to</span>
+                                          <span class="c1"># be used without rebuilding the graph.</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">add_to_collection</span><span class="p">(</span><span class="s1">&#39;bn_deciders&#39;</span><span class="p">,</span> <span class="n">is_training</span><span class="p">)</span>
+
+    <span class="n">pop_mean</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">tensor_in</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]),</span> <span class="n">trainable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">pop_var</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="n">tensor_in</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]),</span> <span class="n">trainable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="c1"># calculate batch mean/var and running mean/var</span>
+    <span class="n">batch_mean</span><span class="p">,</span> <span class="n">batch_variance</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">moments</span><span class="p">(</span><span class="n">tensor_in</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># The running mean/variance is updated when is_training == 1.</span>
+    <span class="n">running_mean</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">pop_mean</span><span class="p">,</span>
+                             <span class="n">pop_mean</span> <span class="o">*</span> <span class="p">(</span><span class="n">decay</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">decay</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">tf</span><span class="o">.</span><span class="n">to_float</span><span class="p">(</span><span class="n">is_training</span><span class="p">)))</span> <span class="o">+</span>
+                             <span class="n">batch_mean</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">decay</span><span class="p">)</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">to_float</span><span class="p">(</span><span class="n">is_training</span><span class="p">))</span>
+    <span class="n">running_var</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">pop_var</span><span class="p">,</span>
+                            <span class="n">pop_var</span> <span class="o">*</span> <span class="p">(</span><span class="n">decay</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">decay</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">tf</span><span class="o">.</span><span class="n">to_float</span><span class="p">(</span><span class="n">is_training</span><span class="p">)))</span> <span class="o">+</span>
+                            <span class="n">batch_variance</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">decay</span><span class="p">)</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">to_float</span><span class="p">(</span><span class="n">is_training</span><span class="p">))</span>
+
+    <span class="c1"># Choose statistic</span>
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">embedding_lookup</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">running_mean</span><span class="p">,</span> <span class="n">batch_mean</span><span class="p">]),</span> <span class="n">is_training</span><span class="p">)</span>
+    <span class="n">variance</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">embedding_lookup</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">running_var</span><span class="p">,</span> <span class="n">batch_variance</span><span class="p">]),</span> <span class="n">is_training</span><span class="p">)</span>
+
+    <span class="n">shape</span> <span class="o">=</span> <span class="n">tensor_in</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()</span>
+    <span class="n">gamma</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;gamma&#39;</span><span class="p">))</span>
+    <span class="n">beta</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;beta&#39;</span><span class="p">))</span>
+
+    <span class="c1"># Batch Norm Transform</span>
+    <span class="n">inv</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">rsqrt</span><span class="p">(</span><span class="n">epsilon</span> <span class="o">+</span> <span class="n">variance</span><span class="p">)</span>
+    <span class="n">tensor_in</span> <span class="o">=</span> <span class="n">beta</span> <span class="o">*</span> <span class="p">(</span><span class="n">tensor_in</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span> <span class="o">*</span> <span class="n">inv</span> <span class="o">+</span> <span class="n">gamma</span>
+
+    <span class="k">return</span> <span class="n">tensor_in</span></div>
+
+
+<div class="viewcode-block" id="dropout"><a class="viewcode-back" href="../tf_ops.html#tf_ops.dropout">[docs]</a><span class="k">def</span> <span class="nf">dropout</span><span class="p">(</span><span class="n">tensor_in</span><span class="p">,</span> <span class="n">prob</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adds dropout node.</span>
+<span class="sd">    `Dropout A Simple Way to Prevent Neural Networks from Overfitting`_</span>
+
+<span class="sd">    :param tensor_in: Input tensor.</span>
+<span class="sd">    :param prob: The percent of units to keep.</span>
+<span class="sd">    :return: Tensor of the same shape of *tensor_in*.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="n">keep_prob</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">tf</span><span class="o">.</span><span class="n">add_to_collection</span><span class="p">(</span><span class="s1">&#39;dropout_prob&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">keep_prob</span><span class="p">,</span> <span class="n">prob</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">tensor_in</span><span class="p">,</span> <span class="n">keep_prob</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="layer_norm"><a class="viewcode-back" href="../tf_ops.html#tf_ops.layer_norm">[docs]</a><span class="k">def</span> <span class="nf">layer_norm</span><span class="p">(</span><span class="n">h</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    :param h: (tensor) Hidden layer of neural network</span>
+<span class="sd">    :return: (tensor) Hidden layer after layer_norm transform</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()</span>
+    <span class="n">bias</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    <span class="n">gain</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+    <span class="n">mu</span><span class="p">,</span> <span class="n">variance</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">moments</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">keep_dims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">gain</span><span class="o">/</span><span class="n">tf</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">variance</span><span class="p">))</span><span class="o">*</span><span class="p">(</span><span class="n">h</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">+</span> <span class="n">bias</span></div>
+
+
+<div class="viewcode-block" id="dnn"><a class="viewcode-back" href="../tf_ops.html#tf_ops.dnn">[docs]</a><span class="k">def</span> <span class="nf">dnn</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">layers</span><span class="o">=</span><span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">408</span><span class="p">],</span> <span class="n">act</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">,</span> <span class="n">scale_range</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keep_prob</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;nnet&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An arbitrarily deep neural network. Output has non-linear activation.</span>
+
+<span class="sd">    :param x: (tf.tensor) Input to the network.</span>
+<span class="sd">    :param layers: List of integer sizes of network layers.</span>
+<span class="sd">    :param act: Activation function to produce hidden layers of neural network.</span>
+<span class="sd">    :param scale_range: (float) Scaling factor for initial range of weights (Set to 1/sqrt(fan_in) for tanh, sqrt(2/fan_in) for relu.</span>
+<span class="sd">    :param norm: Normalization function. Could be layer_norm or other function that retains shape of tensor.</span>
+<span class="sd">    :param keep_prob: (float) The percent of nodes to keep in dropout layers.</span>
+<span class="sd">    :param name: (str) For naming and variable scope.</span>
+<span class="sd">    :return: (tf.Tensor) Output of neural net. This will be just following a non linear transform, so that final activation has not been applied.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">scale_range</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="n">scale_range</span> <span class="o">=</span> <span class="p">[</span><span class="n">scale_range</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">layers</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">layers</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">scale_range</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">hidden_size</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">layers</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="s1">&#39;layer_</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">ind</span><span class="p">):</span>
+
+            <span class="n">fan_in</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">W</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">fan_scale</span><span class="p">(</span><span class="n">scale_range</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="n">act</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">truncated_normal</span><span class="p">([</span><span class="n">fan_in</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">],</span>
+                                                                                      <span class="n">mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">stddev</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                                                                                      <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                                                                      <span class="n">name</span><span class="o">=</span><span class="s1">&#39;W&#39;</span><span class="p">))</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">add_to_collection</span><span class="p">(</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;_weights&#39;</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">hidden_size</span><span class="p">]))</span> <span class="o">+</span> <span class="mf">0.1</span><span class="o">*</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">act</span> <span class="o">==</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">))</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">add_to_collection</span><span class="p">(</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;_bias&#39;</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span>
+            <span class="k">if</span> <span class="n">norm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">norm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">act</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;h&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ind</span><span class="p">))</span>  <span class="c1"># The hidden layer</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">add_to_collection</span><span class="p">(</span><span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;_activation&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">keep_prob</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">dropout</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">keep_prob</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span></div>
+
+
+<div class="viewcode-block" id="bidir_lm_rnn"><a class="viewcode-back" href="../tf_ops.html#tf_ops.bidir_lm_rnn">[docs]</a><span class="k">def</span> <span class="nf">bidir_lm_rnn</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">token_embed</span><span class="p">,</span> <span class="n">layers</span><span class="p">,</span> <span class="n">seq_len</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">context_vector</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cell</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">rnn_cell</span><span class="o">.</span><span class="n">BasicLSTMCell</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Token level bidirectional LSTM language model that uses a sentence level context vector.</span>
+
+<span class="sd">    :param x: Input to rnn</span>
+<span class="sd">    :param t: Targets for language model predictions (typically next token in sequence)</span>
+<span class="sd">    :param token_embed: (tensor) MB X ALPHABET_SIZE.</span>
+<span class="sd">    :param layers: A list of hidden layer sizes for stacked lstm</span>
+<span class="sd">    :param seq_len: A 1D tensor of mini-batch size for variable length sequences</span>
+<span class="sd">    :param context_vector: (tensor) MB X 2*CONTEXT_LSTM_OUTPUT_DIM. Optional context to append to each token embedding</span>
+<span class="sd">    :param cell: (class) A tensorflow RNNCell sub-class</span>
+<span class="sd">    :return: (tensor) tuple-token_losses , (list of tensors) hidden_states, (tensor) final_hidden</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">token_set_size</span> <span class="o">=</span> <span class="n">token_embed</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="s1">&#39;forward&#39;</span><span class="p">):</span>
+        <span class="n">fw_cells</span> <span class="o">=</span> <span class="p">[</span><span class="n">cell</span><span class="p">(</span><span class="n">num_units</span><span class="p">)</span> <span class="k">for</span> <span class="n">num_units</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">]</span>
+        <span class="n">fw_cell</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">rnn_cell</span><span class="o">.</span><span class="n">MultiRNNCell</span><span class="p">(</span><span class="n">fw_cells</span><span class="p">,</span> <span class="n">state_is_tuple</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="s1">&#39;backward&#39;</span><span class="p">):</span>
+        <span class="n">bw_cells</span> <span class="o">=</span> <span class="p">[</span><span class="n">cell</span><span class="p">(</span><span class="n">num_units</span><span class="p">)</span> <span class="k">for</span> <span class="n">num_units</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">]</span>
+        <span class="n">bw_cell</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">rnn_cell</span><span class="o">.</span><span class="n">MultiRNNCell</span><span class="p">(</span><span class="n">bw_cells</span><span class="p">,</span> <span class="n">state_is_tuple</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">x_lookup</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">embedding_lookup</span><span class="p">(</span><span class="n">token_embed</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># List of mb X embedding_size tensors</span>
+    <span class="n">input_features</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">unstack</span><span class="p">(</span><span class="n">x_lookup</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">context_vector</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">input_features</span> <span class="o">=</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">embedding</span><span class="p">,</span> <span class="n">context_vector</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">embedding</span> <span class="ow">in</span> <span class="n">input_features</span><span class="p">]</span>
+    <span class="c1"># input_features: list of sentence long tensors (mb X embedding_size)</span>
+    <span class="n">hidden_states</span><span class="p">,</span> <span class="n">fw_cell_state</span><span class="p">,</span> <span class="n">bw_cell_state</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">static_bidirectional_rnn</span><span class="p">(</span><span class="n">fw_cell</span><span class="p">,</span> <span class="n">bw_cell</span><span class="p">,</span> <span class="n">input_features</span><span class="p">,</span>
+                                                                          <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+                                                                          <span class="n">sequence_length</span><span class="o">=</span><span class="n">seq_len</span><span class="p">,</span>
+                                                                          <span class="n">scope</span><span class="o">=</span><span class="s1">&#39;language_model&#39;</span><span class="p">)</span>
+    <span class="n">final_hidden</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">((</span><span class="n">fw_cell_state</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="n">bw_cell_state</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">h</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">f_hidden_states</span><span class="p">,</span> <span class="n">b_hidden_states</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">),</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="c1"># 2  sen_len X num_users X hidden_size tensors</span>
+    <span class="c1"># truncate forward and backward output to align for prediction</span>
+    <span class="n">f_hidden_states</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">unstack</span><span class="p">(</span><span class="n">f_hidden_states</span><span class="p">)[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="c1"># sen_len-2 X num_users X hidden_size tensor</span>
+    <span class="n">b_hidden_states</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">unstack</span><span class="p">(</span><span class="n">b_hidden_states</span><span class="p">)[</span><span class="mi">2</span><span class="p">:])</span> <span class="c1"># sen_len-2 X num_users X hidden_size tensor</span>
+    <span class="c1"># concatenate forward and backward output for prediction</span>
+    <span class="n">prediction_states</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">unstack</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">((</span><span class="n">f_hidden_states</span><span class="p">,</span> <span class="n">b_hidden_states</span><span class="p">),</span> <span class="mi">2</span><span class="p">))</span>  <span class="c1"># sen_len-2 long list of num_users X 2*hidden_size tensors</span>
+    <span class="n">token_losses</span> <span class="o">=</span> <span class="n">batch_softmax_dist_loss</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">prediction_states</span><span class="p">,</span> <span class="n">token_set_size</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">token_losses</span><span class="p">,</span> <span class="n">hidden_states</span><span class="p">,</span> <span class="n">final_hidden</span></div>
+
+
+<div class="viewcode-block" id="lm_rnn"><a class="viewcode-back" href="../tf_ops.html#tf_ops.lm_rnn">[docs]</a><span class="k">def</span> <span class="nf">lm_rnn</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">token_embed</span><span class="p">,</span> <span class="n">layers</span><span class="p">,</span> <span class="n">seq_len</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">context_vector</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cell</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">rnn_cell</span><span class="o">.</span><span class="n">BasicLSTMCell</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Token level LSTM language model that uses a sentence level context vector.</span>
+
+<span class="sd">    :param x: (tensor) Input to rnn</span>
+<span class="sd">    :param t: (tensor) Targets for language model predictions (typically next token in sequence)</span>
+<span class="sd">    :param token_embed: (tensor) MB X ALPHABET_SIZE.</span>
+<span class="sd">    :param layers: A list of hidden layer sizes for stacked lstm</span>
+<span class="sd">    :param seq_len: A 1D tensor of mini-batch size for variable length sequences</span>
+<span class="sd">    :param context_vector: (tensor) MB X 2*CONTEXT_LSTM_OUTPUT_DIM. Optional context to append to each token embedding</span>
+<span class="sd">    :param cell: (class) A tensorflow RNNCell sub-class</span>
+<span class="sd">    :return: (tuple) token_losses (tensor), hidden_states (list of tensors), final_hidden (tensor)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">token_set_size</span> <span class="o">=</span> <span class="n">token_embed</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">cells</span> <span class="o">=</span> <span class="p">[</span><span class="n">cell</span><span class="p">(</span><span class="n">num_units</span><span class="p">)</span> <span class="k">for</span> <span class="n">num_units</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">]</span>
+    <span class="n">cell</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">rnn_cell</span><span class="o">.</span><span class="n">MultiRNNCell</span><span class="p">(</span><span class="n">cells</span><span class="p">,</span> <span class="n">state_is_tuple</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># mb X sentence_length X embedding_size</span>
+    <span class="n">x_lookup</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">embedding_lookup</span><span class="p">(</span><span class="n">token_embed</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># List of mb X embedding_size tensors</span>
+    <span class="n">input_features</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">unstack</span><span class="p">(</span><span class="n">x_lookup</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># input_features: list max_length of sentence long tensors (mb X embedding_size+context_size)</span>
+    <span class="k">if</span> <span class="n">context_vector</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">input_features</span> <span class="o">=</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">embedding</span><span class="p">,</span> <span class="n">context_vector</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">embedding</span> <span class="ow">in</span> <span class="n">input_features</span><span class="p">]</span>
+
+    <span class="c1"># hidden_states: sentence length long list of tensors (mb X final_layer_size)</span>
+    <span class="c1"># cell_state: data structure that contains the cell state for each hidden layer for a mini-batch (complicated)</span>
+    <span class="n">hidden_states</span><span class="p">,</span> <span class="n">cell_state</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">static_rnn</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">input_features</span><span class="p">,</span>
+                                          <span class="n">initial_state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                          <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+                                          <span class="n">sequence_length</span><span class="o">=</span><span class="n">seq_len</span><span class="p">,</span>
+                                          <span class="n">scope</span><span class="o">=</span><span class="s1">&#39;language_model&#39;</span><span class="p">)</span>
+    <span class="c1"># batch_size X sequence_length (see tf_ops for def)</span>
+    <span class="n">token_losses</span> <span class="o">=</span> <span class="n">batch_softmax_dist_loss</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">hidden_states</span><span class="p">,</span> <span class="n">token_set_size</span><span class="p">)</span>
+    <span class="n">final_hidden</span> <span class="o">=</span> <span class="n">cell_state</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">h</span>
+    <span class="k">return</span> <span class="n">token_losses</span><span class="p">,</span> <span class="n">hidden_states</span><span class="p">,</span> <span class="n">final_hidden</span></div>
+
+
+<div class="viewcode-block" id="join_multivariate_inputs"><a class="viewcode-back" href="../tf_ops.html#tf_ops.join_multivariate_inputs">[docs]</a><span class="k">def</span> <span class="nf">join_multivariate_inputs</span><span class="p">(</span><span class="n">feature_spec</span><span class="p">,</span> <span class="n">specs</span><span class="p">,</span> <span class="n">embedding_ratio</span><span class="p">,</span> <span class="n">max_embedding</span><span class="p">,</span> <span class="n">min_embedding</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Makes placeholders for all input data, performs a lookup on an embedding matrix for each categorical feature,</span>
+<span class="sd">    and concatenates the resulting real-valued vectors from individual features into a single vector for each data point in the batch.</span>
+
+<span class="sd">    :param feature_spec: A dict {categorical: [c1, c2, ..., cp], continuous:[f1, f2, ...,fk]</span>
+<span class="sd">                        which lists which features to use as categorical and continuous inputs to the model.</span>
+<span class="sd">                        c1, ..., cp, f1, ...,fk should match a key in specs.</span>
+<span class="sd">    :param specs: A python dict containing information about which indices in the incoming data point correspond to which features.</span>
+<span class="sd">                  Entries for continuous features list the indices for the feature, while entries for categorical features</span>
+<span class="sd">                  contain a dictionary- {&#39;index&#39;: i, &#39;num_classes&#39;: c}, where i and c are the index into the datapoint, and number of distinct</span>
+<span class="sd">                  categories for the category in question.</span>
+<span class="sd">    :param embedding_ratio: Determines size of embedding vectors for each categorical feature: num_classes*embedding_ratio (within limits below)</span>
+<span class="sd">    :param max_embedding: A limit on how large an embedding vector can be.</span>
+<span class="sd">    :param min_embedding: A limit on how small an embedding vector can be.</span>
+<span class="sd">    :return: A tuple (x, placeholderdict):</span>
+<span class="sd">            (tensor with shape [None, Sum_of_lengths_of_all_continuous_feature_vecs_and_embedding_vecs],</span>
+<span class="sd">            dict to store tf placeholders to pair with data, )</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">placeholderdict</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">,</span> <span class="n">continuous_features</span><span class="p">,</span> <span class="n">targets</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">{},</span> <span class="p">{},</span> <span class="p">{}</span>
+
+    <span class="c1"># Make placeholders for all input data and select embeddings for categorical data</span>
+    <span class="k">for</span> <span class="n">dataname</span> <span class="ow">in</span> <span class="n">feature_spec</span><span class="p">[</span><span class="s1">&#39;categorical&#39;</span><span class="p">]:</span>
+        <span class="n">embedding_size</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">embedding_ratio</span> <span class="o">*</span> <span class="n">specs</span><span class="p">[</span><span class="n">dataname</span><span class="p">][</span><span class="s1">&#39;num_classes&#39;</span><span class="p">])</span>
+        <span class="n">embedding_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">max_embedding</span><span class="p">,</span> <span class="n">embedding_size</span><span class="p">),</span> <span class="n">min_embedding</span><span class="p">))</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">dataname</span><span class="p">):</span>
+            <span class="n">placeholderdict</span><span class="p">[</span><span class="n">dataname</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">])</span>
+            <span class="n">embedding_matrix</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="mf">1e-5</span><span class="o">*</span><span class="n">tf</span><span class="o">.</span><span class="n">truncated_normal</span><span class="p">((</span><span class="n">specs</span><span class="p">[</span><span class="n">dataname</span><span class="p">][</span><span class="s1">&#39;num_classes&#39;</span><span class="p">],</span> <span class="n">embedding_size</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+            <span class="n">embeddings</span><span class="p">[</span><span class="n">dataname</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">embedding_lookup</span><span class="p">(</span><span class="n">embedding_matrix</span><span class="p">,</span> <span class="n">placeholderdict</span><span class="p">[</span><span class="n">dataname</span><span class="p">])</span>
+
+    <span class="k">for</span> <span class="n">dataname</span> <span class="ow">in</span> <span class="n">feature_spec</span><span class="p">[</span><span class="s1">&#39;continuous&#39;</span><span class="p">]:</span>
+        <span class="n">placeholderdict</span><span class="p">[</span><span class="n">dataname</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">specs</span><span class="p">[</span><span class="n">dataname</span><span class="p">][</span><span class="s1">&#39;index&#39;</span><span class="p">])])</span>
+        <span class="n">continuous_features</span><span class="p">[</span><span class="n">dataname</span><span class="p">]</span> <span class="o">=</span> <span class="n">placeholderdict</span><span class="p">[</span><span class="n">dataname</span><span class="p">]</span>
+
+    <span class="c1"># concatenate all features</span>
+    <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">continuous_features</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="o">+</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;features&#39;</span><span class="p">),</span> <span class="n">placeholderdict</span></div>
+
+
+<span class="c1"># ============================================================</span>
+<span class="c1"># ================ LOSS FUNCTIONS ============================</span>
+<span class="c1"># ============================================================</span>
+
+<div class="viewcode-block" id="softmax_dist_loss"><a class="viewcode-back" href="../tf_ops.html#tf_ops.softmax_dist_loss">[docs]</a><span class="k">def</span> <span class="nf">softmax_dist_loss</span><span class="p">(</span><span class="n">truth</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">dimension</span><span class="p">,</span> <span class="n">scale_range</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">U</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function paired with a tensorflow optimizer is multinomial logistic regression.</span>
+<span class="sd">    It is designed for cotegorical predictions.</span>
+
+<span class="sd">    :param truth: A tensorflow vector tensor of integer class labels.</span>
+<span class="sd">    :param h: A placeholder if doing simple multinomial logistic regression, or the output of some neural network.</span>
+<span class="sd">    :param dimension: Number of classes in output distribution.</span>
+<span class="sd">    :param scale_range: For scaling the weight matrices (by default weights are initialized two 1/sqrt(fan_in)) for tanh activation and sqrt(2/fan_in) for relu activation.</span>
+<span class="sd">    :param U: Optional weight tensor (If you is not provided a new weight tensor is made)</span>
+<span class="sd">    :return: (Tensor[MB X 1]) Cross-entropy of true distribution vs. predicted distribution.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fan_in</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">U</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">U</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">fan_scale</span><span class="p">(</span><span class="n">scale_range</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">tanh</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">truncated_normal</span><span class="p">([</span><span class="n">fan_in</span><span class="p">,</span> <span class="n">dimension</span><span class="p">],</span>
+                                                                             <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+                                                                             <span class="n">name</span><span class="o">=</span><span class="s1">&#39;W&#39;</span><span class="p">))</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">dimension</span><span class="p">]))</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span>
+    <span class="n">loss_column</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">sparse_softmax_cross_entropy_with_logits</span><span class="p">(</span><span class="n">logits</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">truth</span><span class="p">)</span>
+    <span class="n">loss_column</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">loss_column</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">loss_column</span></div>
+
+
+<div class="viewcode-block" id="batch_softmax_dist_loss"><a class="viewcode-back" href="../tf_ops.html#tf_ops.batch_softmax_dist_loss">[docs]</a><span class="k">def</span> <span class="nf">batch_softmax_dist_loss</span><span class="p">(</span><span class="n">truth</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">dimension</span><span class="p">,</span> <span class="n">scale_range</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function paired with a tensorflow optimizer is multinomial logistic regression.</span>
+<span class="sd">    It is designed for cotegorical predictions.</span>
+
+<span class="sd">    :param truth: (tf.Tensor) A tensorflow vector tensor of integer class labels.</span>
+<span class="sd">    :param h: (tf.Tensor) A placeholder if doing simple multinomial logistic regression, or the output of some neural network.</span>
+<span class="sd">    :param dimension: (int) Number of classes in output distribution.</span>
+<span class="sd">    :param scale_range: (float) For scaling the weight matrices (by default weights are initialized two 1/sqrt(fan_in)) for tanh activation and sqrt(2/fan_in) for relu activation.</span>
+<span class="sd">    :return: (tf.Tensor, shape = [MB, Sequence_length]) Cross-entropy of true distribution vs. predicted distribution.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fan_in</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">initializer</span> <span class="o">=</span> <span class="n">fan_scale</span><span class="p">(</span><span class="n">scale_range</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">tanh</span><span class="p">,</span> <span class="n">h</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">truncated_normal</span><span class="p">([</span><span class="n">fan_in</span><span class="p">,</span> <span class="n">dimension</span><span class="p">],</span>
+                                                                               <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+                                                                               <span class="n">name</span><span class="o">=</span><span class="s1">&#39;W&#39;</span><span class="p">)</span>
+    <span class="n">U</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="s1">&#39;softmax_weights&#39;</span><span class="p">,</span> <span class="n">initializer</span><span class="o">=</span><span class="n">initializer</span><span class="p">)</span>
+
+    <span class="n">hidden_tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="c1"># sequence_length X batch_size X final_hidden_size</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">add_to_collection</span><span class="p">(</span><span class="s1">&#39;logit_weights&#39;</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="s1">&#39;softmax_bias&#39;</span><span class="p">,</span> <span class="n">initializer</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">dimension</span><span class="p">]))</span>
+    <span class="n">ustack</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">U</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">h</span><span class="p">))</span> <span class="c1">#sequence_length X final_hidden_size X dimension</span>
+    <span class="n">logits</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">hidden_tensor</span><span class="p">,</span> <span class="n">ustack</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span> <span class="c1"># sequence_length X batch_size X dimension</span>
+    <span class="n">logits</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">perm</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span> <span class="c1"># batch_size X sequence_length X dimension</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">add_to_collection</span><span class="p">(</span><span class="s2">&quot;true_probabilities&quot;</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">))</span> <span class="c1"># added to store probabilities of true logline</span>
+    <span class="n">loss_matrix</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">sparse_softmax_cross_entropy_with_logits</span><span class="p">(</span><span class="n">logits</span><span class="o">=</span><span class="n">logits</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">truth</span><span class="p">)</span> <span class="c1"># batch_size X sequence_length</span>
+    <span class="k">return</span> <span class="n">loss_matrix</span></div>
+
+
+<div class="viewcode-block" id="eyed_mvn_loss"><a class="viewcode-back" href="../tf_ops.html#tf_ops.eyed_mvn_loss">[docs]</a><span class="k">def</span> <span class="nf">eyed_mvn_loss</span><span class="p">(</span><span class="n">truth</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">scale_range</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function takes the output of a neural network after it&#39;s last activation, performs an affine transform,</span>
+<span class="sd">    and returns the squared error of this result and the target.</span>
+
+<span class="sd">    :param truth: A tensor of target vectors.</span>
+<span class="sd">    :param h: The output of a neural network post activation.</span>
+<span class="sd">    :param scale_range: For scaling the weight matrices (by default weights are initialized two 1/sqrt(fan_in)) for</span>
+<span class="sd">    tanh activation and sqrt(2/fan_in) for relu activation.</span>
+<span class="sd">    :return: (tf.Tensor[MB X D], None) squared_error, None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fan_in</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="n">truth</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">U</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">fan_scale</span><span class="p">(</span><span class="n">scale_range</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">tanh</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">truncated_normal</span><span class="p">([</span><span class="n">fan_in</span><span class="p">,</span> <span class="n">dim</span><span class="p">],</span>
+                                                                             <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;U&#39;</span><span class="p">))</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">dim</span><span class="p">]))</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span>
+    <span class="n">loss_columns</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="n">truth</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">loss_columns</span><span class="p">,</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="diag_mvn_loss"><a class="viewcode-back" href="../tf_ops.html#tf_ops.diag_mvn_loss">[docs]</a><span class="k">def</span> <span class="nf">diag_mvn_loss</span><span class="p">(</span><span class="n">truth</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">scale_range</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">variance_floor</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Takes the output of a neural network after it&#39;s last activation, performs an affine transform.</span>
+<span class="sd">    It returns the mahalonobis distances between the targets and the result of the affine transformation, according</span>
+<span class="sd">    to a parametrized Normal distribution with diagonal covariance. The log of the determinant of the parametrized</span>
+<span class="sd">    covariance matrix is meant to be minimized to avoid a trivial optimization.</span>
+
+<span class="sd">    :param truth: (tf.Tensor) The targets for this minibatch.</span>
+<span class="sd">    :param h: (tf.Tensor) The output of dnn. (Here the output of dnn , h, is assumed to be the same dimension as truth)</span>
+<span class="sd">    :param scale_range: (float) For scaling the weight matrices (by default weights are initialized two 1/sqrt(fan_in)) for tanh activation and sqrt(2/fan_in) for relu activation.</span>
+<span class="sd">    :param variance_floor: (float, positive) To ensure model doesn&#39;t find trivial optimization.</span>
+<span class="sd">    :return: (tf.Tensor shape=[MB X D], tf.Tensor shape=[MB X 1]) Loss matrix, log_of_determinants of covariance matrices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fan_in</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="n">truth</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">U</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span>
+        <span class="n">fan_scale</span><span class="p">(</span><span class="n">scale_range</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">tanh</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">truncated_normal</span><span class="p">([</span><span class="n">fan_in</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">dim</span><span class="p">],</span>
+                                                                 <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+                                                                 <span class="n">name</span><span class="o">=</span><span class="s1">&#39;U&#39;</span><span class="p">))</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">2</span> <span class="o">*</span> <span class="n">dim</span><span class="p">]))</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span>
+    <span class="n">mu</span><span class="p">,</span> <span class="n">var</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># split y into two even sized matrices, each with half the columns</span>
+    <span class="n">var</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">var</span><span class="p">),</span> <span class="n">variance_floor</span><span class="p">)</span> <span class="c1"># make the variance non-negative</span>
+                     <span class="c1">#tf.constant(variance_floor, shape=[dim], dtype=tf.float32))</span>
+    <span class="n">logdet</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">var</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># MB x 1</span>
+    <span class="n">loss_columns</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">truth</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span> <span class="o">/</span> <span class="n">var</span>  <span class="c1"># MB x D</span>
+    <span class="k">return</span> <span class="n">loss_columns</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">logdet</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span></div>
+
+
+<span class="c1"># TODO: Look at fixing magic number in full covariance loss</span>
+<div class="viewcode-block" id="full_mvn_loss"><a class="viewcode-back" href="../tf_ops.html#tf_ops.full_mvn_loss">[docs]</a><span class="k">def</span> <span class="nf">full_mvn_loss</span><span class="p">(</span><span class="n">truth</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Takes the output of a neural network after it&#39;s last activation, performs an affine transform.</span>
+<span class="sd">    It returns the mahalonobis distances between the targets and the result of the affine transformation, according</span>
+<span class="sd">    to a parametrized Normal distribution. The log of the determinant of the parametrized</span>
+<span class="sd">    covariance matrix is meant to be minimized to avoid a trivial optimization.</span>
+
+<span class="sd">    :param truth: Actual datapoints to compare against learned distribution</span>
+<span class="sd">    :param h: output of neural network (after last non-linear transform)</span>
+<span class="sd">    :return: (tf.Tensor[MB X D], tf.Tensor[MB X 1]) Loss matrix, log_of_determinants of covariance matrices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fan_in</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">dimension</span> <span class="o">=</span> <span class="n">truth</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">U</span> <span class="o">=</span> <span class="mi">100</span><span class="o">*</span><span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">truncated_normal</span><span class="p">([</span><span class="n">fan_in</span><span class="p">,</span> <span class="n">dimension</span> <span class="o">+</span> <span class="n">dimension</span><span class="o">**</span><span class="mi">2</span><span class="p">],</span>
+                                                                 <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+                                                                 <span class="n">name</span><span class="o">=</span><span class="s1">&#39;U&#39;</span><span class="p">))</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">dimension</span> <span class="o">+</span> <span class="n">dimension</span><span class="o">**</span><span class="mi">2</span><span class="p">]))</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">slice</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dimension</span><span class="p">])</span>  <span class="c1"># is MB x dimension</span>
+    <span class="n">var</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">slice</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">dimension</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">*</span><span class="mf">0.0001</span>  <span class="c1"># is MB x dimension^2 # WARNING WARNING TODO FIX THIS MAGIC NUMBER</span>
+    <span class="n">var</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dimension</span><span class="p">,</span> <span class="n">dimension</span><span class="p">])</span>  <span class="c1"># make it a MB x D x D tensor (var is a superset of the lower triangular part of a Cholesky decomp)</span>
+    <span class="n">var_diag</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">matrix_diag_part</span><span class="p">(</span><span class="n">var</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span> <span class="c1"># WARNING: FIX THIS MAGIC NUMBER</span>
+    <span class="n">var</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matrix_set_diag</span><span class="p">(</span><span class="n">var</span><span class="p">,</span><span class="n">var_diag</span><span class="p">)</span>
+    <span class="n">var</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matrix_band_part</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">matrix_triangular_solve</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">truth</span> <span class="o">-</span> <span class="n">mu</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dimension</span><span class="p">,</span> <span class="mi">1</span><span class="p">]),</span> <span class="n">lower</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">adjoint</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>  <span class="c1"># z should be MB x D</span>
+    <span class="n">inner_prods</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">z</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># take row-wise inner products of z, leaving MB x 1 vector</span>
+    <span class="n">logdet</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">matrix_diag_part</span><span class="p">(</span><span class="n">var</span><span class="p">))),</span> <span class="mi">1</span><span class="p">)</span> <span class="c1"># diag_part converts MB x D x D to MB x D, square and log preserve, then sum makes MB x 1</span>
+    <span class="n">loss_column</span> <span class="o">=</span> <span class="n">inner_prods</span>  <span class="c1"># is MB x 1 ... hard to track of individual features&#39; contributions due to correlations</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">add_to_collection</span><span class="p">(</span><span class="s1">&#39;full&#39;</span><span class="p">,</span> <span class="n">var_diag</span><span class="p">)</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">add_to_collection</span><span class="p">(</span><span class="s1">&#39;full&#39;</span><span class="p">,</span> <span class="n">var</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">loss_column</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]),</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">logdet</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="multivariate_loss"><a class="viewcode-back" href="../tf_ops.html#tf_ops.multivariate_loss">[docs]</a><span class="k">def</span> <span class="nf">multivariate_loss</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">loss_spec</span><span class="p">,</span> <span class="n">placeholder_dict</span><span class="p">,</span> <span class="n">variance_floor</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes a multivariate loss according to loss_spec.</span>
+
+<span class="sd">    :param h: Final hidden layer of dnn or rnn. (Post-activation)</span>
+<span class="sd">    :param loss_spec: A tuple of 3-tuples of the form (input_name, loss_function, dimension) where</span>
+<span class="sd">                        input_name is the same as a target in datadict,</span>
+<span class="sd">                         loss_function takes two parameters, a target and prediction,</span>
+<span class="sd">                         and dimension is the dimension of the target.</span>
+<span class="sd">    :param placeholder_dict: A dictionary to store placeholder tensors for target values.</span>
+<span class="sd">    :param variance_floor: (float) Parameter for diag_mvn_loss.</span>
+<span class="sd">    :return loss_matrix: (MB X concatenated_feature_size Tensor) Contains loss for all contributors for each data point.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">log_det_list</span><span class="p">,</span> <span class="n">log_det_names</span><span class="p">,</span> <span class="n">loss_list</span><span class="p">,</span> <span class="n">loss_names</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">input_name</span><span class="p">,</span> <span class="n">loss_func</span><span class="p">,</span> <span class="n">dimension</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">loss_spec</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">input_name</span><span class="p">):</span>
+            <span class="c1"># this input will be a (classification or regression) target - need to define a placeholder for it</span>
+            <span class="k">if</span> <span class="n">loss_func</span> <span class="o">==</span> <span class="n">softmax_dist_loss</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">dimension</span><span class="p">])</span>
+            <span class="n">placeholder_dict</span><span class="p">[</span><span class="s2">&quot;target_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">input_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+
+            <span class="c1"># predict this input from the current hidden state</span>
+            <span class="k">if</span> <span class="n">loss_func</span> <span class="o">==</span> <span class="n">softmax_dist_loss</span><span class="p">:</span> <span class="c1"># discrete</span>
+                <span class="n">component_wise_point_loss</span> <span class="o">=</span> <span class="n">loss_func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">dimension</span><span class="p">)</span><span class="c1"># MB X 1</span>
+            <span class="k">elif</span> <span class="n">loss_func</span> <span class="o">==</span> <span class="n">diag_mvn_loss</span><span class="p">:</span> <span class="c1"># continuous</span>
+                <span class="n">component_wise_point_loss</span><span class="p">,</span> <span class="n">logdet</span> <span class="o">=</span> <span class="n">loss_func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">variance_floor</span><span class="o">=</span><span class="n">variance_floor</span><span class="p">)</span><span class="c1"># MB X DIM_MULTIVARIATE, MB X 1</span>
+                <span class="k">if</span> <span class="n">logdet</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">log_det_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">logdet</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span> <span class="c1"># continuous</span>
+                <span class="n">component_wise_point_loss</span><span class="p">,</span> <span class="n">logdet</span> <span class="o">=</span> <span class="n">loss_func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span><span class="c1"># MB X DIM_MULTIVARIATE, MB X 1</span>
+                <span class="k">if</span> <span class="n">logdet</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">log_det_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">logdet</span><span class="p">)</span>
+            <span class="n">loss_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">component_wise_point_loss</span><span class="p">)</span>
+
+    <span class="n">loss_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">log_det_list</span><span class="p">)</span>
+    <span class="n">loss_matrix</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">loss_list</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># is MB x (total num contributors)</span>
+
+    <span class="k">return</span> <span class="n">loss_matrix</span></div>
+
+
+<div class="viewcode-block" id="layer_norm_rnn"><a class="viewcode-back" href="../tf_ops.html#tf_ops.layer_norm_rnn">[docs]</a><span class="k">def</span> <span class="nf">layer_norm_rnn</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span>
+                   <span class="n">initial_state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">layers</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,),</span>
+                   <span class="n">sequence_lengths</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">state_index</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param inputs: A list with length the number of time steps of longest sequence in the batch. inputs contains</span>
+<span class="sd">                    matrices of shape=[num_sequences X feature_dimension]</span>
+<span class="sd">    :param initial_state: Initialized first hidden states. A  tuple of len(layers) tuples of cell and hidden state tensors</span>
+<span class="sd">    :param layers: list of number of nodes in each of stacked lstm layers</span>
+<span class="sd">    :param sequence_lengths: A vector of sequence lengths of size batch_size</span>
+<span class="sd">    :param state_index: If -1, last state is returned, if None all states are returned, if 1, second state is returned.</span>
+<span class="sd">    :return: hidden_states, current_state</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">layer_norm_stack</span> <span class="o">=</span> <span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">rnn_cell</span><span class="o">.</span><span class="n">BasicLSTMCell</span><span class="p">(</span><span class="n">layers</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">state_is_tuple</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">layers</span><span class="p">)):</span>
+        <span class="n">layer_norm_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">rnn</span><span class="o">.</span><span class="n">LayerNormBasicLSTMCell</span><span class="p">(</span><span class="n">layers</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+
+    <span class="n">cell</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">rnn_cell</span><span class="o">.</span><span class="n">MultiRNNCell</span><span class="p">(</span><span class="n">layer_norm_stack</span><span class="p">,</span> <span class="n">state_is_tuple</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">hidden_states</span><span class="p">,</span> <span class="n">current_state</span> <span class="o">=</span> <span class="n">true_bptt_rnn</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span>
+                                                 <span class="n">inputs</span><span class="p">,</span>
+                                                 <span class="n">initial_state</span><span class="o">=</span><span class="n">initial_state</span><span class="p">,</span>
+                                                 <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+                                                 <span class="n">sequence_length</span><span class="o">=</span><span class="n">sequence_lengths</span><span class="p">,</span>
+                                                 <span class="n">state_index</span><span class="o">=</span><span class="n">state_index</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hidden_states</span><span class="p">,</span> <span class="n">current_state</span></div>
+
+
+<div class="viewcode-block" id="swapping_rnn"><a class="viewcode-back" href="../tf_ops.html#tf_ops.swapping_rnn">[docs]</a><span class="k">def</span> <span class="nf">swapping_rnn</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span>
+                 <span class="n">initial_state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">layers</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,),</span>
+                 <span class="n">sequence_lengths</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">state_index</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param inputs: A list with length the number of time steps of longest sequence in the batch. inputs contains</span>
+<span class="sd">                    matrices of shape=[num_sequences X feature_dimension]</span>
+<span class="sd">    :param initial_state: Initialized first hidden states. A  tuple of len(layers) tuples of cell and hidden state tensors</span>
+<span class="sd">    :param layers: list of number of nodes in each of stacked lstm layers</span>
+<span class="sd">    :param sequence_lengths: A vector of sequence lengths of size batch_size</span>
+<span class="sd">    :param state_index: If -1, last state is returned, if None all states are returned, if 1, second state is returned.</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">cells</span> <span class="o">=</span> <span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">rnn_cell</span><span class="o">.</span><span class="n">BasicLSTMCell</span><span class="p">(</span><span class="n">num_units</span><span class="p">,</span> <span class="n">state_is_tuple</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">num_units</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">]</span>
+    <span class="n">cell</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">rnn_cell</span><span class="o">.</span><span class="n">MultiRNNCell</span><span class="p">(</span><span class="n">cells</span><span class="p">,</span> <span class="n">state_is_tuple</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">hidden_states</span><span class="p">,</span> <span class="n">current_state</span> <span class="o">=</span> <span class="n">true_bptt_rnn</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span>
+                                                 <span class="n">inputs</span><span class="p">,</span>
+                                                 <span class="n">initial_state</span><span class="o">=</span><span class="n">initial_state</span><span class="p">,</span>
+                                                 <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+                                                 <span class="n">sequence_length</span><span class="o">=</span><span class="n">sequence_lengths</span><span class="p">,</span>
+                                                 <span class="n">state_index</span><span class="o">=</span><span class="n">state_index</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hidden_states</span><span class="p">,</span> <span class="n">current_state</span></div>
+
+
+<span class="c1"># ==================================================================================</span>
+<span class="c1"># =======================Adapted From Tensorflow====================================</span>
+<span class="c1"># ==================================================================================</span>
+<span class="k">def</span> <span class="nf">_state_size_with_prefix</span><span class="p">(</span><span class="n">state_size</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Helper function that enables int or TensorShape shape specification.</span>
+<span class="sd">    This function takes a size specification, which can be an integer or a</span>
+<span class="sd">    TensorShape, and converts it into a list of integers. One may specify any</span>
+<span class="sd">    additional dimensions that precede the final state size specification.</span>
+
+<span class="sd">    :param state_size: TensorShape or int that specifies the size of a tensor.</span>
+<span class="sd">      prefix: optional additional list of dimensions to prepend.</span>
+<span class="sd">    :return: result_state_size: list of dimensions the resulting tensor size.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result_state_size</span> <span class="o">=</span> <span class="n">tensor_shape</span><span class="o">.</span><span class="n">as_shape</span><span class="p">(</span><span class="n">state_size</span><span class="p">)</span><span class="o">.</span><span class="n">as_list</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">prefix</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;prefix of _state_size_with_prefix should be a list.&quot;</span><span class="p">)</span>
+        <span class="n">result_state_size</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">result_state_size</span>
+    <span class="k">return</span> <span class="n">result_state_size</span>
+
+
+<div class="viewcode-block" id="true_bptt_rnn"><a class="viewcode-back" href="../tf_ops.html#tf_ops.true_bptt_rnn">[docs]</a><span class="k">def</span> <span class="nf">true_bptt_rnn</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">initial_state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                  <span class="n">sequence_length</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">state_index</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>  <span class="c1">### Adapted From Tensorflow</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a recurrent neural network specified by RNNCell `cell`.</span>
+<span class="sd">    The simplest form of RNN network generated is:</span>
+
+<span class="sd">    .. code:: python</span>
+
+<span class="sd">        state = cell.zero_state(...)</span>
+<span class="sd">        outputs = []</span>
+<span class="sd">        for input_ in inputs:</span>
+<span class="sd">            output, state = cell(input_, state)</span>
+<span class="sd">            outputs.append(output)</span>
+<span class="sd">      return (outputs, state)</span>
+
+<span class="sd">    However, a few other options are available:</span>
+<span class="sd">    An initial state can be provided.</span>
+<span class="sd">    If the sequence_length vector is provided, dynamic calculation is performed.</span>
+<span class="sd">    This method of calculation does not compute the RNN steps past the maximum</span>
+<span class="sd">    sequence length of the minibatch (thus saving computational time),</span>
+<span class="sd">    and properly propagates the state at an example&#39;s sequence length</span>
+<span class="sd">    to the final state output.</span>
+<span class="sd">    The dynamic calculation performed is, at time t for batch row b,</span>
+
+<span class="sd">    .. code ::</span>
+
+<span class="sd">        (output, state)(b, t) = (t &gt;= sequence_length(b)) ? (zeros(cell.output_size), states(b, sequence_length(b) - 1)) : cell(input(b, t), state(b, t - 1))</span>
+
+<span class="sd">    :param cell: An instance of RNNCell.</span>
+<span class="sd">    :param inputs: A length T list of inputs, each a tensor of shape</span>
+<span class="sd">                   [batch_size, input_size].</span>
+<span class="sd">    :param initial_state: (optional) An initial state for the RNN.</span>
+<span class="sd">        If `cell.state_size` is an integer, this must be</span>
+<span class="sd">        a tensor of appropriate type and shape `[batch_size x cell.state_size]`.</span>
+<span class="sd">        If `cell.state_size` is a tuple, this should be a tuple of</span>
+<span class="sd">        tensors having shapes `[batch_size, s] for s in cell.state_size`.</span>
+<span class="sd">    :param dtype: (optional) The data type for the initial state.  Required if</span>
+<span class="sd">        initial_state is not provided.</span>
+<span class="sd">    :param sequence_length: Specifies the length of each sequence in inputs.</span>
+<span class="sd">        An int32 or int64 vector (tensor) size `[batch_size]`, values in `[0, T)`.</span>
+<span class="sd">    :param scope: VariableScope for the created subgraph; defaults to &quot;RNN&quot;.</span>
+<span class="sd">    :param state_index: (int) If -1 final state is returned, if 1 state after first rnn step is returned. If anything else</span>
+<span class="sd">                        all states are returned</span>
+<span class="sd">    :return: A pair (outputs, state) where:</span>
+
+<span class="sd">        - outputs is a length T list of outputs (one for each input)</span>
+<span class="sd">        - state is the final state or a a length T list of cell states</span>
+<span class="sd">    :raise: TypeError: If `cell` is not an instance of RNNCell.</span>
+<span class="sd">      ValueError: If `inputs` is `None` or an empty list, or if the input depth</span>
+<span class="sd">        (column size) cannot be inferred from inputs via shape inference.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">rnn_cell</span><span class="o">.</span><span class="n">RNNCell</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;cell must be an instance of RNNCell&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;inputs must be a list&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">inputs</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;inputs must not be empty&quot;</span><span class="p">)</span>
+
+    <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">states</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># Create a new scope in which the caching device is either</span>
+    <span class="c1"># determined by the parent scope, or is set to place the cached</span>
+    <span class="c1"># Variable using the same placement as for the rest of the RNN.</span>
+    <span class="k">with</span> <span class="n">vs</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">scope</span> <span class="ow">or</span> <span class="s2">&quot;RNN&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">varscope</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">varscope</span><span class="o">.</span><span class="n">caching_device</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">varscope</span><span class="o">.</span><span class="n">set_caching_device</span><span class="p">(</span><span class="k">lambda</span> <span class="n">op</span><span class="p">:</span> <span class="n">op</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="c1"># Temporarily avoid EmbeddingWrapper and seq2seq badness</span>
+        <span class="k">if</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">ndims</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">input_shape</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">with_rank_at_least</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">assert_is_fully_defined</span><span class="p">()</span>
+            <span class="p">(</span><span class="n">fixed_batch_size</span><span class="p">,</span> <span class="n">input_size</span><span class="p">)</span> <span class="o">=</span> <span class="n">input_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">if</span> <span class="n">input_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Input size (second dimension of inputs[0]) must be accessible via &quot;</span>
+                    <span class="s2">&quot;shape inference, but saw value None.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fixed_batch_size</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">with_rank_at_least</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">fixed_batch_size</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="n">batch_size</span> <span class="o">=</span> <span class="n">fixed_batch_size</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">batch_size</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">initial_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">initial_state</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">dtype</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;If no initial_state is provided, &quot;</span>
+                                 <span class="s2">&quot;dtype must be specified&quot;</span><span class="p">)</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">zero_state</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">sequence_length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># Prepare variables</span>
+            <span class="n">sequence_length</span> <span class="o">=</span> <span class="n">math_ops</span><span class="o">.</span><span class="n">to_int32</span><span class="p">(</span><span class="n">sequence_length</span><span class="p">)</span>
+            <span class="c1"># convert int to TensorShape if necessary</span>
+            <span class="n">output_size</span> <span class="o">=</span> <span class="n">_state_size_with_prefix</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">output_size</span><span class="p">,</span>
+                                                  <span class="n">prefix</span><span class="o">=</span><span class="p">[</span><span class="n">batch_size</span><span class="p">])</span>
+            <span class="n">zero_output</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="n">array_ops</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">output_size</span><span class="p">),</span>
+                <span class="n">inputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+            <span class="n">zero_output_shape</span> <span class="o">=</span> <span class="n">_state_size_with_prefix</span><span class="p">(</span>
+                <span class="n">cell</span><span class="o">.</span><span class="n">output_size</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="p">[</span><span class="n">fixed_batch_size</span><span class="o">.</span><span class="n">value</span><span class="p">])</span>
+            <span class="n">zero_output</span><span class="o">.</span><span class="n">set_shape</span><span class="p">(</span><span class="n">tensor_shape</span><span class="o">.</span><span class="n">TensorShape</span><span class="p">(</span><span class="n">zero_output_shape</span><span class="p">))</span>
+            <span class="n">min_sequence_length</span> <span class="o">=</span> <span class="n">math_ops</span><span class="o">.</span><span class="n">reduce_min</span><span class="p">(</span><span class="n">sequence_length</span><span class="p">)</span>
+            <span class="n">max_sequence_length</span> <span class="o">=</span> <span class="n">math_ops</span><span class="o">.</span><span class="n">reduce_max</span><span class="p">(</span><span class="n">sequence_length</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">time</span><span class="p">,</span> <span class="n">input_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">inputs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">time</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> <span class="n">varscope</span><span class="o">.</span><span class="n">reuse_variables</span><span class="p">()</span>
+            <span class="c1"># pylint: disable=cell-var-from-loop</span>
+            <span class="n">call_cell</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">cell</span><span class="p">(</span><span class="n">input_</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+            <span class="c1"># pylint: enable=cell-var-from-loop</span>
+            <span class="k">if</span> <span class="n">sequence_length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span> <span class="o">=</span> <span class="n">rnn</span><span class="o">.</span><span class="n">_rnn_step</span><span class="p">(</span>
+                    <span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="p">,</span>
+                    <span class="n">sequence_length</span><span class="o">=</span><span class="n">sequence_length</span><span class="p">,</span>
+                    <span class="n">min_sequence_length</span><span class="o">=</span><span class="n">min_sequence_length</span><span class="p">,</span>
+                    <span class="n">max_sequence_length</span><span class="o">=</span><span class="n">max_sequence_length</span><span class="p">,</span>
+                    <span class="n">zero_output</span><span class="o">=</span><span class="n">zero_output</span><span class="p">,</span>
+                    <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+                    <span class="n">call_cell</span><span class="o">=</span><span class="n">call_cell</span><span class="p">,</span>
+                    <span class="n">state_size</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">state_size</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span> <span class="o">=</span> <span class="n">call_cell</span><span class="p">()</span>
+            <span class="n">states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">state_index</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">next_state</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">state_index</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">next_state</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">next_state</span> <span class="o">=</span> <span class="n">states</span>
+    <span class="k">return</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">next_state</span></div>
+
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Batelle Memorial Institute.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.01',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

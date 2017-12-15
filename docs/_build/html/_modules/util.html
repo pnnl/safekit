@@ -1,0 +1,430 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>util &mdash; safekit 0.01 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="safekit 0.01 documentation" href="../index.html"/>
+        <link rel="up" title="Module code" href="index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> safekit
+          
+
+          
+            
+            <img src="../_static/pnnl.jpg" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.01
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../tf_ops.html">tf_ops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../batch.html">batch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../graph_training_utils.html">graph_training_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../util.html">util</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../features.html">features</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">safekit</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Module code</a> &raquo;</li>
+        
+      <li>util</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for util</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Python and numpy functions.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">tf_ops</span> <span class="k">import</span> <span class="n">softmax_dist_loss</span><span class="p">,</span> <span class="n">diag_mvn_loss</span><span class="p">,</span> <span class="n">full_mvn_loss</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+
+
+<div class="viewcode-block" id="make_feature_spec"><a class="viewcode-back" href="../util.html#util.make_feature_spec">[docs]</a><span class="k">def</span> <span class="nf">make_feature_spec</span><span class="p">(</span><span class="n">dataspec</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Makes lists of all the continuous and categorical features to be used as input features of a neural network.</span>
+
+<span class="sd">    :param dataspec: (dict) From a json specification of the purpose of fields in the csv input file (See docs for formatting)</span>
+<span class="sd">    :return: (dict) features {&#39;categorical&#39;: [categorical_feature_1, ..., categorical_feature_j],</span>
+<span class="sd">                              &#39;continuous&#39;: [continuous_feature_1, ..., continuous_feature_k]}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dataspec</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s1">&#39;num_features&#39;</span><span class="p">}</span>
+    <span class="n">feature_spec</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;categorical&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;continuous&#39;</span><span class="p">:</span> <span class="p">[]}</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">field</span><span class="p">[</span><span class="s1">&#39;num_classes&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">field</span><span class="p">[</span><span class="s1">&#39;feature&#39;</span><span class="p">]:</span>
+            <span class="n">feature_spec</span><span class="p">[</span><span class="s1">&#39;continuous&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">field</span><span class="p">[</span><span class="s1">&#39;num_classes&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">field</span><span class="p">[</span><span class="s1">&#39;feature&#39;</span><span class="p">]:</span>
+            <span class="n">feature_spec</span><span class="p">[</span><span class="s1">&#39;categorical&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">feature_spec</span></div>
+
+
+<div class="viewcode-block" id="make_loss_spec"><a class="viewcode-back" href="../util.html#util.make_loss_spec">[docs]</a><span class="k">def</span> <span class="nf">make_loss_spec</span><span class="p">(</span><span class="n">dataspec</span><span class="p">,</span> <span class="n">mvn</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Makes a list of tuples for each target to be used in training a multiple output neural network modeling a</span>
+<span class="sd">    mixed joint distribution of discrete and continuous variables.</span>
+<span class="sd">    :param dataspec: (dict) From a json specification of the purpose of fields in the csv input file (See docs for formatting)</span>
+<span class="sd">    :param mvn: Tensorflow function for calculating type of multivariate loss for continuous target vectors.</span>
+<span class="sd">                Can be tf_ops.diag_mvn_loss, tf_ops.full_mvn_loss, tf_ops.eyed_mvn_loss</span>
+<span class="sd">    :return: A list of tuples of the form: (target_name, loss_function, dimension) where dimension</span>
+<span class="sd">             is the dimension of the target vector (for categorical features this is the number of classes, for continuous</span>
+<span class="sd">             targets this is the size of the continuous target vector)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">dataspec</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s1">&#39;num_features&#39;</span><span class="p">}</span>
+    <span class="n">loss_spec</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">field</span><span class="p">[</span><span class="s1">&#39;num_classes&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">field</span><span class="p">[</span><span class="s1">&#39;target&#39;</span><span class="p">]:</span>
+            <span class="n">loss_spec</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">key</span><span class="p">,</span> <span class="n">mvn</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">field</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">])))</span>
+        <span class="k">if</span> <span class="n">field</span><span class="p">[</span><span class="s1">&#39;num_classes&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">field</span><span class="p">[</span><span class="s1">&#39;target&#39;</span><span class="p">]:</span>
+            <span class="n">loss_spec</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">key</span><span class="p">,</span> <span class="n">softmax_dist_loss</span><span class="p">,</span> <span class="n">field</span><span class="p">[</span><span class="s1">&#39;num_classes&#39;</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">loss_spec</span></div>
+
+
+<div class="viewcode-block" id="get_multivariate_loss_names"><a class="viewcode-back" href="../util.html#util.get_multivariate_loss_names">[docs]</a><span class="k">def</span> <span class="nf">get_multivariate_loss_names</span><span class="p">(</span><span class="n">loss_spec</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    For use in conjunction with `tf_ops.multivariate_loss`. Gives the names of all contributors (columns) of the loss matrix.</span>
+
+<span class="sd">    :param loss_spec: A list of 3-tuples of the form (input_name, loss_function, dimension) where</span>
+<span class="sd">                        input_name is the same as a target in datadict,</span>
+<span class="sd">                        loss_function takes two parameters, a target and prediction,</span>
+<span class="sd">                        and dimension is the dimension of the target.</span>
+<span class="sd">    :return: loss_names is a list concatenated_feature_size long with names of all loss contributors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">loss_names</span><span class="p">,</span> <span class="n">log_det_names</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">input_name</span><span class="p">,</span> <span class="n">loss_func</span><span class="p">,</span> <span class="n">dimension</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">loss_spec</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">loss_func</span> <span class="o">==</span> <span class="n">softmax_dist_loss</span><span class="p">:</span>  <span class="c1"># discrete</span>
+            <span class="n">loss_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;loss_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">input_name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># continuous</span>
+            <span class="k">if</span> <span class="n">loss_func</span> <span class="o">==</span> <span class="n">diag_mvn_loss</span> <span class="ow">or</span> <span class="n">loss_func</span> <span class="o">==</span> <span class="n">full_mvn_loss</span><span class="p">:</span>
+                <span class="n">log_det_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;loss_</span><span class="si">%s</span><span class="s2">.logdet&quot;</span> <span class="o">%</span> <span class="n">input_name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dimension</span><span class="p">):</span>
+                <span class="n">loss_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;loss_</span><span class="si">%s</span><span class="s2">.</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">input_name</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+
+    <span class="n">loss_names</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">log_det_names</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">loss_names</span></div>
+
+
+<div class="viewcode-block" id="get_mask"><a class="viewcode-back" href="../util.html#util.get_mask">[docs]</a><span class="k">def</span> <span class="nf">get_mask</span><span class="p">(</span><span class="n">lens</span><span class="p">,</span> <span class="n">num_tokens</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    For masking output of lm_rnn for jagged sequences for correct gradient update.</span>
+<span class="sd">    Sequence length of 0 will output nan for that row of mask so don&#39;t do this.</span>
+
+<span class="sd">    :param lens: Numpy vector of sequence lengths</span>
+<span class="sd">    :param num_tokens: (int) Number of predicted tokens in sentence.</span>
+<span class="sd">    :return: A numpy array mask MB X num_tokens</span>
+<span class="sd">             For each row there are: lens[i] values of 1/lens[i]</span>
+<span class="sd">                                     followed by num_tokens - lens[i] zeros</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mask_template</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_tokens</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">lens</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">mask_template</span> <span class="o">&lt;</span> <span class="n">lens</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span> <span class="o">/</span> <span class="n">lens</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RunningMean"><a class="viewcode-back" href="../util.html#util.RunningMean">[docs]</a><span class="k">class</span> <span class="nc">RunningMean</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the batchwise running mean from rows, columns, or values of a matrix.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param axis: The axis to calculate the running mean over. If axis==None then the running mean for the entire array is taken.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># total number of samples</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">avg</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">axis</span> <span class="o">=</span> <span class="n">axis</span>
+
+<div class="viewcode-block" id="RunningMean.__call__"><a class="viewcode-back" href="../util.html#util.RunningMean.__call__">[docs]</a>    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param samples: a matrix of samples to incorporate into running mean</span>
+<span class="sd">        :return: running average over axis</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">axis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">])</span>  <span class="c1"># num_new_samples</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">+=</span> <span class="n">m</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">avg</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">-</span> <span class="n">m</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">avg</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span>  <span class="c1"># second term = (new_avg*m)/n</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">avg</span></div></div>
+
+
+<div class="viewcode-block" id="ExponentialRunningMean"><a class="viewcode-back" href="../util.html#util.ExponentialRunningMean">[docs]</a><span class="k">class</span> <span class="nc">ExponentialRunningMean</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the running mean of row vectors batchwise given a sequence of matrices.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param alpha: (float)  Higher alpha discounts older observations faster.</span>
+<span class="sd">                                The smaller the alpha, the further you take into consideration the past.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mean</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
+
+<div class="viewcode-block" id="ExponentialRunningMean.__call__"><a class="viewcode-back" href="../util.html#util.ExponentialRunningMean.__call__">[docs]</a>    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param samples: a matrix of samples to incorporate into running mean</span>
+<span class="sd">        :return: running average over axis</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">old_mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="n">new_mean</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span><span class="o">*</span><span class="n">old_mean</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="o">*</span><span class="n">samples</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">new_mean</span><span class="p">])</span>
+                <span class="n">old_mean</span> <span class="o">=</span> <span class="n">new_mean</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span></div></div>
+
+
+<div class="viewcode-block" id="Parser"><a class="viewcode-back" href="../util.html#util.Parser">[docs]</a><span class="k">class</span> <span class="nc">Parser</span><span class="p">(</span><span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Hack for Sphinx documentation of scripts to work correctly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_get_option_tuples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">option_string</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># option strings starting with two prefix characters are only</span>
+        <span class="c1"># split at the &#39;=&#39;</span>
+        <span class="n">chars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix_chars</span>
+        <span class="k">if</span> <span class="n">option_string</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">chars</span> <span class="ow">and</span> <span class="n">option_string</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">chars</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;=&#39;</span> <span class="ow">in</span> <span class="n">option_string</span><span class="p">:</span>
+                <span class="n">option_prefix</span><span class="p">,</span> <span class="n">explicit_arg</span> <span class="o">=</span> <span class="n">option_string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">option_prefix</span> <span class="o">=</span> <span class="n">option_string</span>
+                <span class="n">explicit_arg</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">option_string</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_option_string_actions</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">option_string</span> <span class="o">==</span> <span class="n">option_prefix</span><span class="p">:</span>
+                    <span class="n">action</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_option_string_actions</span><span class="p">[</span><span class="n">option_string</span><span class="p">]</span>
+                    <span class="n">tup</span> <span class="o">=</span> <span class="n">action</span><span class="p">,</span> <span class="n">option_string</span><span class="p">,</span> <span class="n">explicit_arg</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tup</span><span class="p">)</span>
+
+        <span class="c1"># single character options can be concatenated with their arguments</span>
+        <span class="c1"># but multiple character options always have to have their argument</span>
+        <span class="c1"># separate</span>
+        <span class="k">elif</span> <span class="n">option_string</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">chars</span> <span class="ow">and</span> <span class="n">option_string</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">chars</span><span class="p">:</span>
+            <span class="n">option_prefix</span> <span class="o">=</span> <span class="n">option_string</span>
+            <span class="n">explicit_arg</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">short_option_prefix</span> <span class="o">=</span> <span class="n">option_string</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">short_explicit_arg</span> <span class="o">=</span> <span class="n">option_string</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+
+            <span class="k">for</span> <span class="n">option_string</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_option_string_actions</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">option_string</span> <span class="o">==</span> <span class="n">short_option_prefix</span><span class="p">:</span>
+                    <span class="n">action</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_option_string_actions</span><span class="p">[</span><span class="n">option_string</span><span class="p">]</span>
+                    <span class="n">tup</span> <span class="o">=</span> <span class="n">action</span><span class="p">,</span> <span class="n">option_string</span><span class="p">,</span> <span class="n">short_explicit_arg</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tup</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">option_string</span> <span class="o">==</span> <span class="n">option_prefix</span><span class="p">:</span>
+                    <span class="n">action</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_option_string_actions</span><span class="p">[</span><span class="n">option_string</span><span class="p">]</span>
+                    <span class="n">tup</span> <span class="o">=</span> <span class="n">action</span><span class="p">,</span> <span class="n">option_string</span><span class="p">,</span> <span class="n">explicit_arg</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tup</span><span class="p">)</span>
+
+        <span class="c1"># shouldn&#39;t ever get here</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="s1">&#39;unexpected option string: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">)</span> <span class="o">%</span> <span class="n">option_string</span><span class="p">)</span>
+
+        <span class="c1"># return the collected option tuples</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Batelle Memorial Institute.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.01',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

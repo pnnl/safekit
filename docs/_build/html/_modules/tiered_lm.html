@@ -1,0 +1,703 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>tiered_lm &mdash; safekit 0.01 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="safekit 0.01 documentation" href="../index.html"/>
+        <link rel="up" title="Module code" href="index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> safekit
+          
+
+          
+            
+            <img src="../_static/pnnl.jpg" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.01
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../tf_ops.html">tf_ops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../batch.html">batch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../graph_training_utils.html">graph_training_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../util.html">util</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../features.html">features</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">safekit</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Module code</a> &raquo;</li>
+        
+      <li>tiered_lm</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for tiered_lm</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This is a two tiered language model for anomaly detection, where the second tier LSTM (log line level)</span>
+<span class="sd">takes the concatenation of the average sentence vector and final hidden state</span>
+<span class="sd">from the lower tier (token level) LSTM as input, creating a new context vector and hidden state</span>
+<span class="sd">for the given user.</span>
+
+<span class="sd">Example Command for running a model configuration</span>
+<span class="sd">-------------------------------------------------</span>
+
+<span class="sd">**Raw (character token) tiered model** (The jagged parameter lets the model know there are variable length sequences) ::</span>
+
+<span class="sd">python safekit/models/tiered_lm.py results/ safekit/features/specs/lm/lanl_char_config.json data_examples/lanl/lm_feats/raw_day_split/ -test -skipsos -jagged</span>
+
+<span class="sd">.. Note ::</span>
+<span class="sd">    The output results will be printed to /tmp/lanl_result/ and then moved to results/ upon completion</span>
+<span class="sd">    to avoid experiment slowdown of constant network traffic.</span>
+
+<span class="sd">File name convention:</span>
+<span class="sd">---------------------</span>
+
+<span class="sd">- em: embedding size for token embedding</span>
+<span class="sd">- ns: number of loglines per user per mini-batch for trunctated back propagation through time</span>
+<span class="sd">- mb: Minibatch size (mini-batch over users)</span>
+<span class="sd">- lr: learnrate (step size for gradient descent)</span>
+<span class="sd">- cl: context layers (number of hidden layers for top level (log line level) context rnn)</span>
+<span class="sd">- lml: language model layers (number of hidden layers for the bottom level, token level, rnn)</span>
+<span class="sd">- rs: random seed for reproducible results</span>
+
+<span class="sd">stdout</span>
+<span class="sd">------</span>
+
+<span class="sd">For each mini-batch the following is printed to standard output ::</span>
+
+<span class="sd">    batchsize line_number second status filename index current_loss</span>
+
+<span class="sd">Where:</span>
+
+<span class="sd">- batchsize: The size of the mini-batch</span>
+<span class="sd">- line_number: Line number from original auth.txt file (may be off by 1)</span>
+<span class="sd">- second: The second of the first event in the mini-batch</span>
+<span class="sd">- status: Whether the model is updating or merely forward propagating</span>
+<span class="sd">- filename: The current file being processed</span>
+<span class="sd">- index: The number of samples processed to date</span>
+<span class="sd">- current_loss: The average loss over the mini-batch</span>
+
+<span class="sd">File output</span>
+<span class="sd">-----------</span>
+<span class="sd">::</span>
+
+<span class="sd">    batch_num line second day user red loss</span>
+
+<span class="sd">Where:</span>
+
+<span class="sd">- batch_num: The mini-batch this event was a part of</span>
+<span class="sd">- line: Line number from original auth.txt file (may be off by 1)</span>
+<span class="sd">- second: The second which the event occurred on</span>
+<span class="sd">- day: The day the event occurred on</span>
+<span class="sd">- user: The user who performed the event</span>
+<span class="sd">- red: Whether this event was a labeled red team activity (1 for red team activity 0 otherwise)</span>
+<span class="sd">- loss: The anomaly score for this event</span>
+
+<span class="sd">.. Note ::</span>
+
+<span class="sd">    The runtime of the experiment is also printed to a file called runtimes.txt at the end of training</span>
+
+<span class="sd">Input Data</span>
+<span class="sd">----------</span>
+
+<span class="sd">The format of the input makes the following assumptions:</span>
+
+<span class="sd">- Input files are together in datafolder, one file for each day.</span>
+<span class="sd">- Input files are plain text files with one line of integers per log line representing meta data and the tokens from log text.</span>
+<span class="sd">- Input format for fixed length sequences ::</span>
+
+<span class="sd">    line_nums second day user red logtokenid1 .... logtokenid_SentenceLen</span>
+<span class="sd">- Zero paded Input format for jagged sequences ::</span>
+
+<span class="sd">    line_nums second day user red SentenceLen logtokenid1 .... logtokenid_SentenceLen 0 0 .... 0</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="c1"># So we can run this code on arbitrary environment which has tensorflow but not safekit installed</span>
+<span class="n">cyberpath</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">3</span><span class="p">])</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cyberpath</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">safekit.batch</span> <span class="k">import</span> <span class="n">OnlineLMBatcher</span>
+<span class="kn">from</span> <span class="nn">simple_lm</span> <span class="k">import</span> <span class="n">write_results</span><span class="p">,</span> <span class="n">CELL</span>
+<span class="kn">from</span> <span class="nn">safekit.tf_ops</span> <span class="k">import</span> <span class="n">lm_rnn</span><span class="p">,</span> <span class="n">bidir_lm_rnn</span>
+<span class="kn">from</span> <span class="nn">safekit.graph_training_utils</span> <span class="k">import</span> <span class="n">ModelRunner</span>
+<span class="kn">from</span> <span class="nn">safekit.util</span> <span class="k">import</span> <span class="n">get_mask</span><span class="p">,</span> <span class="n">Parser</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">math</span>
+
+
+<div class="viewcode-block" id="return_parser"><a class="viewcode-back" href="../lm.html#tiered_lm.return_parser">[docs]</a><span class="k">def</span> <span class="nf">return_parser</span><span class="p">():</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">()</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;results_folder&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The folder to print results to.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;config&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The data spec.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;datafolder&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;File with token features&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-encoding&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Can be &quot;oct&quot;, &quot;raw&quot; or &quot;word&quot;&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-em&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Dimension of token embeddings&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-numsteps&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;length of unrolled context_rnn, number of log lines per user per train step&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-mb&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Number of users in mini-batch.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-learnrate&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Step size for gradient descent.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-context_layers&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;List of hidden layer sizes for context lstm.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-lm_layers&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;List of hidden layer sizes for token lstm.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-debug&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Use this flag to print feed dictionary contents and dimensions.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-random_seed&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Random seed for reproducible experiments.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-jagged&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Whether using sequences of variable length (Input should&#39;</span>
+                             <span class="s1">&#39;be zero-padded to max_sequence_length.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-skipsos&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Whether to skip a start of sentence token.&#39;</span><span class="p">)</span> 
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-bidir&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Whether to use bidirectional lstm for lower tier.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-test&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Whether to run on a subset of the data (5000 lines from days 1,2,3) or the entire set.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-verbose&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Whether to print loss during training.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-delimiter&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Delimiter for input text file&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-cell_type&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;lstm&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Can be either &quot;lstm&quot;, &quot;ident_ran&quot;, or &quot;ran&quot;&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-upper_cell_type&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;lstm&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Can be either &quot;lstm&quot;, &quot;ident_ran&quot;, or &quot;ran&quot;&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">parser</span></div>
+
+
+<div class="viewcode-block" id="ContextRNN"><a class="viewcode-back" href="../lm.html#tiered_lm.ContextRNN">[docs]</a><span class="k">class</span> <span class="nc">ContextRNN</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Log line level LSTM cell that keeps track of it&#39;s last lstm state tuple</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layers</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span>
+                 <span class="n">cell</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">rnn_cell</span><span class="o">.</span><span class="n">LSTMCell</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param layers: List of hidden layer sizes.</span>
+<span class="sd">        :param initial_state: List of numlayers lists of tensors (cell_state, hidden_state),</span>
+<span class="sd">                              or List of lstm state tuples (which are named tuples of tensors (c=cell_state, h=hidden_state)</span>
+<span class="sd">        :param cell: Type of rnn cell to use.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cell_type</span> <span class="o">=</span> <span class="n">cell</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cell_stack</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">rnn_cell</span><span class="o">.</span><span class="n">MultiRNNCell</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">cell_type</span><span class="p">(</span><span class="n">cell_size</span><span class="p">)</span> <span class="k">for</span> <span class="n">cell_size</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">layers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">initial_state</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower_outputs</span><span class="p">,</span> <span class="n">final_hidden</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param line_input: The input for current time step.</span>
+<span class="sd">        :param state: The cell state output by ContextRnn from previous time step.</span>
+<span class="sd">        :param seq_len: A 1D tensor of of size mb giving lengths of sequences in mb for this time step</span>
+<span class="sd">        :return: (tensor, LSTMStateTuple) output, state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ctxt_input</span> <span class="o">=</span> <span class="n">ContextRNN</span><span class="o">.</span><span class="n">_create_input</span><span class="p">(</span><span class="n">lower_outputs</span><span class="p">,</span> <span class="n">final_hidden</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">)</span>
+        <span class="n">output</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_stack</span><span class="p">(</span><span class="n">ctxt_input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">output</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_create_input</span><span class="p">(</span><span class="n">lower_outputs</span><span class="p">,</span> <span class="n">final_hidden</span><span class="p">,</span> <span class="n">seq_len</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param lower_outputs:  The list of output Tensors from the token level rnn</span>
+<span class="sd">        :param final_hidden: The final hidden state from the token level rnn</span>
+<span class="sd">        :param seq_len: A 1D tensor of of size mb giving lengths of token level sequences in mb for this time step</span>
+<span class="sd">        :return: A tensor which is the concatenation of the hidden state averages and final hidden state from lower</span>
+<span class="sd">                 tier model. Used as input to context rnn</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">seq_len</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mean_hidden</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">lower_outputs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">/</span><span class="n">seq_len</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mean_hidden</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">lower_outputs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">mean_hidden</span><span class="p">,</span> <span class="n">final_hidden</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="tiered_lm"><a class="viewcode-back" href="../lm.html#tiered_lm.tiered_lm">[docs]</a><span class="k">def</span> <span class="nf">tiered_lm</span><span class="p">(</span><span class="n">token_set_size</span><span class="p">,</span> <span class="n">embedding_size</span><span class="p">,</span> <span class="n">ph_dict</span><span class="p">,</span> <span class="n">context_layers</span><span class="p">,</span> <span class="n">lm_layers</span><span class="p">,</span>
+              <span class="n">numsteps</span><span class="p">,</span> <span class="n">bidir</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jagged</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param token_set_size: (int) Number of unique tokens in token set</span>
+<span class="sd">    :param embedding_size: (int) Dimensionality of token embeddings</span>
+<span class="sd">    :param ph_dict: dictionary of tensorflow placeholders and lists of tensorflow placeholders</span>
+<span class="sd">    :param context_layers: List of hidden layer sizes for stacked context LSTM</span>
+<span class="sd">    :param lm_layers: list of hidden layer sizes for stacked sentence LSTM</span>
+<span class="sd">    :param numsteps: How many steps (log lines) to unroll the upper tier RNN</span>
+<span class="sd">    :param bidir: Whether to use bidirectional LSTM for lower tier model</span>
+<span class="sd">    :param jagged: Whether or not variable length sequences are used</span>
+<span class="sd">    :return: total_loss (scalar tensor),</span>
+<span class="sd">             context_vector (tensor),</span>
+<span class="sd">             line_loss_matrix (tensor), Losses for each line in mini-batch</span>
+<span class="sd">             context_state (LSTMStateTuple) Final state of upper tier model</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">bidir</span><span class="p">:</span>
+        <span class="n">language_model</span> <span class="o">=</span> <span class="n">bidir_lm_rnn</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">language_model</span> <span class="o">=</span> <span class="n">lm_rnn</span>
+    <span class="c1"># =========================================================</span>
+    <span class="c1"># ========== initialize token level lstm variables ========</span>
+    <span class="c1"># =========================================================</span>
+    <span class="k">if</span> <span class="n">jagged</span><span class="p">:</span>
+        <span class="n">ph_dict</span><span class="p">[</span><span class="s1">&#39;lens&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">ph_dict</span><span class="p">[</span><span class="s1">&#39;masks&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">context_vector</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">ctxt_size</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;context_vector&quot;</span><span class="p">)</span>
+    <span class="n">ph_dict</span><span class="p">[</span><span class="s1">&#39;context_vector&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">context_vector</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">add_to_collection</span><span class="p">(</span><span class="s1">&#39;context_vector&#39;</span><span class="p">,</span> <span class="n">ph_dict</span><span class="p">[</span><span class="s1">&#39;context_vector&#39;</span><span class="p">])</span>
+    <span class="n">token_embed</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">truncated_normal</span><span class="p">([</span><span class="n">token_set_size</span><span class="p">,</span> <span class="n">embedding_size</span><span class="p">]))</span>  <span class="c1"># Initial embeddings vocab X embedding size</span>
+    <span class="n">total_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="c1"># =========================================================</span>
+    <span class="c1"># ======= initialize log line level (context) lstm ========</span>
+    <span class="c1"># =========================================================</span>
+    <span class="n">ph_dict</span><span class="p">[</span><span class="s1">&#39;c_state_init&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">c_size</span><span class="p">])</span> <span class="k">for</span> <span class="n">c_size</span> <span class="ow">in</span> <span class="n">context_layers</span><span class="p">]</span>
+    <span class="n">ph_dict</span><span class="p">[</span><span class="s1">&#39;h_state_init&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">h_size</span><span class="p">])</span> <span class="k">for</span> <span class="n">h_size</span> <span class="ow">in</span> <span class="n">context_layers</span><span class="p">]</span>
+    <span class="n">context_init</span> <span class="o">=</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">rnn_cell</span><span class="o">.</span><span class="n">LSTMStateTuple</span><span class="p">(</span><span class="n">ph_dict</span><span class="p">[</span><span class="s1">&#39;c_state_init&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">],</span>
+                                                  <span class="n">ph_dict</span><span class="p">[</span><span class="s1">&#39;h_state_init&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">])</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">context_layers</span><span class="p">))]</span>
+    <span class="n">ctxt_rnn</span> <span class="o">=</span> <span class="n">ContextRNN</span><span class="p">(</span><span class="n">context_layers</span><span class="p">,</span> <span class="n">context_init</span><span class="p">,</span> <span class="n">cell</span><span class="o">=</span><span class="n">CELL</span><span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">upper_cell_type</span><span class="p">])</span>
+
+    <span class="c1"># =========================================================</span>
+    <span class="c1"># ======= initiate loop that ties together tiered lstm ====</span>
+    <span class="c1"># =========================================================</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="s2">&quot;reuse_scope&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">vscope</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">numsteps</span><span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">sentence_length</span><span class="p">])</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">sentence_length</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">bidir</span><span class="p">])</span>
+            <span class="n">ph_dict</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">ph_dict</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">jagged</span><span class="p">:</span>
+                <span class="n">seq_len</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">])</span>
+                <span class="n">ph_dict</span><span class="p">[</span><span class="s1">&#39;lens&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">seq_len</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">seq_len</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">token_losses</span><span class="p">,</span> <span class="n">hidden_states</span><span class="p">,</span> <span class="n">final_hidden</span> <span class="o">=</span> <span class="n">language_model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">token_embed</span><span class="p">,</span> <span class="n">lm_layers</span><span class="p">,</span>
+                                                                       <span class="n">seq_len</span><span class="o">=</span><span class="n">seq_len</span><span class="p">,</span>
+                                                                       <span class="n">context_vector</span><span class="o">=</span><span class="n">context_vector</span><span class="p">,</span>
+                                                                       <span class="n">cell</span><span class="o">=</span><span class="n">CELL</span><span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">cell_type</span><span class="p">])</span>
+
+            <span class="k">if</span> <span class="n">jagged</span><span class="p">:</span>
+                <span class="n">ph_dict</span><span class="p">[</span><span class="s1">&#39;masks&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">sentence_length</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">bidir</span><span class="p">]))</span>
+                <span class="n">token_losses</span> <span class="o">*=</span> <span class="n">ph_dict</span><span class="p">[</span><span class="s1">&#39;masks&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">line_losses</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">token_losses</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># batch_size X 1</span>
+                <span class="n">sequence_lengths</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">ph_dict</span><span class="p">[</span><span class="s1">&#39;lens&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">line_losses</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">token_losses</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># batch_size X 1</span>
+                <span class="n">sequence_lengths</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">avgloss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">line_losses</span><span class="p">)</span>  <span class="c1"># scalar</span>
+            <span class="n">total_loss</span> <span class="o">+=</span> <span class="n">avgloss</span>
+
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">line_loss_matrix</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">line_losses</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">tf</span><span class="o">.</span><span class="n">add_to_collection</span><span class="p">(</span><span class="s1">&#39;first_line_loss_matrix&#39;</span><span class="p">,</span> <span class="n">line_loss_matrix</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">line_loss_matrix</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">((</span><span class="n">line_loss_matrix</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">line_losses</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])),</span> <span class="mi">0</span><span class="p">)</span>
+
+            <span class="n">context_vector</span><span class="p">,</span> <span class="n">context_state</span> <span class="o">=</span> <span class="n">ctxt_rnn</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">,</span>
+                                                     <span class="n">final_hidden</span><span class="p">,</span>
+                                                     <span class="n">sequence_lengths</span><span class="p">)</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">add_to_collection</span><span class="p">(</span><span class="s1">&#39;context_vector&#39;</span><span class="p">,</span> <span class="n">context_vector</span><span class="p">)</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">add_to_collection</span><span class="p">(</span><span class="s1">&#39;context_state&#39;</span><span class="p">,</span> <span class="n">context_state</span><span class="p">)</span>
+            <span class="n">tf</span><span class="o">.</span><span class="n">get_variable_scope</span><span class="p">()</span><span class="o">.</span><span class="n">reuse_variables</span><span class="p">()</span>
+    <span class="n">total_loss</span> <span class="o">/=</span> <span class="nb">float</span><span class="p">(</span><span class="n">numsteps</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">total_loss</span><span class="p">,</span> <span class="n">context_vector</span><span class="p">,</span> <span class="n">line_loss_matrix</span><span class="p">,</span> <span class="n">context_state</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+
+    <span class="c1">#  ===========================================================================</span>
+    <span class="c1">#  =========================PARSE ARGUMENTS===================================</span>
+    <span class="c1">#  ===========================================================================</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">return_parser</span><span class="p">()</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="n">conf</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">))</span>
+
+    <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="n">args</span><span class="o">.</span><span class="n">context_layers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">context_layers</span><span class="p">),</span> <span class="s1">&#39;Different sized context layers not supported.&#39;</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">numsteps</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;Must have at least two upper tier time steps to build graph for tiered lstm.&#39;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">results_folder</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">results_folder</span> <span class="o">+=</span> <span class="s1">&#39;/&#39;</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">set_random_seed</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">random_seed</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">random_seed</span><span class="p">)</span>
+    <span class="n">sentence_length</span> <span class="o">=</span> <span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="s1">&#39;sentence_length&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">skipsos</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="p">)</span>
+    <span class="n">token_set_size</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="s1">&#39;token_set_size&#39;</span><span class="p">]</span>
+
+    <span class="n">ctxt_size</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">context_layers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">direction</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;fwd&#39;</span><span class="p">,</span> <span class="s1">&#39;bidir&#39;</span><span class="p">)[</span><span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="p">]</span>
+    <span class="n">results_file</span> <span class="o">=</span> <span class="s1">&#39;tier_</span><span class="si">%s</span><span class="s1">_</span><span class="si">%s</span><span class="s1">_</span><span class="si">%s</span><span class="s1">_</span><span class="si">%s</span><span class="s1">__em_</span><span class="si">%s</span><span class="s1">__ns_</span><span class="si">%s</span><span class="s1">__mb_</span><span class="si">%s</span><span class="s1">__lr_</span><span class="si">%s</span><span class="s1">__cl_</span><span class="si">%s</span><span class="s1">__lml_</span><span class="si">%s</span><span class="s1">__rs_</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">direction</span><span class="p">,</span>
+                                                                                        <span class="n">args</span><span class="o">.</span><span class="n">encoding</span><span class="p">,</span>
+                                                                                        <span class="n">args</span><span class="o">.</span><span class="n">cell_type</span><span class="p">,</span>
+                                                                                        <span class="n">time</span><span class="o">.</span><span class="n">ctime</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">),</span>
+                                                                                        <span class="n">args</span><span class="o">.</span><span class="n">em</span><span class="p">,</span>
+                                                                                        <span class="n">args</span><span class="o">.</span><span class="n">numsteps</span><span class="p">,</span>
+                                                                                        <span class="n">args</span><span class="o">.</span><span class="n">mb</span><span class="p">,</span>
+                                                                                        <span class="n">args</span><span class="o">.</span><span class="n">learnrate</span><span class="p">,</span>
+                                                                                        <span class="n">args</span><span class="o">.</span><span class="n">context_layers</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                                                                        <span class="n">args</span><span class="o">.</span><span class="n">lm_layers</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                                                                        <span class="n">args</span><span class="o">.</span><span class="n">random_seed</span><span class="p">)</span>
+    <span class="c1"># if the -test flag passed, store predictions in a temporary file</span>
+    <span class="k">if</span> <span class="s2">&quot;lanl_results&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="s2">&quot;/tmp&quot;</span><span class="p">):</span>                               
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;mkdir /tmp/lanl_results; chmod g+rwx /tmp/lanl_results&quot;</span><span class="p">)</span>
+    <span class="n">outfile</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/tmp/lanl_results/&quot;</span> <span class="o">+</span> <span class="n">results_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+    <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;batch line second day user red loss</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;fixed&#39;</span><span class="p">,</span> <span class="s1">&#39;update&#39;</span><span class="p">)</span>
+    <span class="n">jag</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">jagged</span><span class="p">)</span>
+    <span class="n">skipsos</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">skipsos</span><span class="p">)</span>
+
+    <span class="c1">#  ===========================================================================</span>
+    <span class="c1">#  =========================BUILD GRAPH=======================================</span>
+    <span class="c1">#  ===========================================================================</span>
+    <span class="n">ph_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">[]}</span>
+    <span class="n">dummy_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">total_loss</span><span class="p">,</span> <span class="n">context_vector</span><span class="p">,</span> <span class="n">line_loss_matrix</span><span class="p">,</span> <span class="n">context_state</span> <span class="o">=</span> <span class="n">tiered_lm</span><span class="p">(</span><span class="n">token_set_size</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">em</span><span class="p">,</span>
+                                                                            <span class="n">ph_dict</span><span class="p">,</span>
+                                                                            <span class="n">args</span><span class="o">.</span><span class="n">context_layers</span><span class="p">,</span>
+                                                                            <span class="n">args</span><span class="o">.</span><span class="n">lm_layers</span><span class="p">,</span>
+                                                                            <span class="n">args</span><span class="o">.</span><span class="n">numsteps</span><span class="p">,</span>
+                                                                            <span class="n">bidir</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="p">,</span>
+                                                                            <span class="n">jagged</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">jagged</span><span class="p">)</span>
+    <span class="n">tiered_network_model</span> <span class="o">=</span> <span class="n">ModelRunner</span><span class="p">(</span><span class="n">total_loss</span><span class="p">,</span> <span class="n">ph_dict</span><span class="p">,</span> <span class="n">learnrate</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">learnrate</span><span class="p">,</span>
+                                       <span class="n">debug</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">debug</span><span class="p">,</span> <span class="n">decay</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                       <span class="n">decay_rate</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span> <span class="n">decay_steps</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+
+    <span class="c1">#  ===========================================================================</span>
+    <span class="c1">#  =========================TRAINING LOOP=====================================</span>
+    <span class="c1">#  ===========================================================================</span>
+    <span class="n">init_triple</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="n">ctxt_size</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="c1"># context</span>
+                   <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="n">c_size</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="k">for</span> <span class="n">c_size</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">context_layers</span><span class="p">],</span> <span class="c1"># state</span>
+                   <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="n">h_size</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="k">for</span> <span class="n">h_size</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">context_layers</span><span class="p">])</span> <span class="c1"># hidden</span>
+
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">trainday</span><span class="p">(</span><span class="n">is_training</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">states</span><span class="p">,</span> <span class="n">logs</span><span class="p">):</span>
+        <span class="n">num_processed</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">OnlineLMBatcher</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">datafolder</span> <span class="o">+</span> <span class="n">f</span><span class="p">,</span> <span class="n">init_triple</span><span class="p">,</span>
+                               <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">mb</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">numsteps</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">do_update</span> <span class="o">=</span> <span class="n">is_training</span>
+        <span class="k">if</span> <span class="n">states</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">state_triples</span> <span class="o">=</span> <span class="n">states</span>
+        <span class="n">batch</span><span class="p">,</span> <span class="n">state_triple</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">next_batch</span><span class="p">()</span>
+        <span class="n">batch_num</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">stragglers</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">while</span> <span class="n">batch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">flush</span><span class="p">:</span>
+                <span class="n">do_update</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># Straggler log lines that don&#39;t fit into num_steps by end of day are run in large batches one step at a time</span>
+                <span class="n">stragglers</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="n">endx</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="p">)</span>
+                <span class="n">endt</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="p">)</span>
+                <span class="n">datadict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;line&#39;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">],</span>
+                            <span class="s1">&#39;second&#39;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">],</span>
+                            <span class="s1">&#39;day&#39;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">],</span>
+                            <span class="s1">&#39;user&#39;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">3</span><span class="p">],</span>
+                            <span class="s1">&#39;red&#39;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">4</span><span class="p">],</span>
+                            <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">5</span> <span class="o">+</span> <span class="n">jag</span> <span class="o">+</span> <span class="n">skipsos</span><span class="p">:</span><span class="n">endx</span><span class="p">]]</span> <span class="o">*</span> <span class="n">args</span><span class="o">.</span><span class="n">numsteps</span><span class="p">,</span>
+                            <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">6</span> <span class="o">+</span> <span class="n">jag</span> <span class="o">+</span> <span class="n">skipsos</span><span class="p">:</span><span class="n">endt</span><span class="p">]]</span> <span class="o">*</span> <span class="n">args</span><span class="o">.</span><span class="n">numsteps</span><span class="p">,</span>
+                            <span class="s1">&#39;context_vector&#39;</span><span class="p">:</span> <span class="n">state_triple</span><span class="p">[</span><span class="s1">&#39;context_vector&#39;</span><span class="p">],</span>
+                            <span class="s1">&#39;c_state_init&#39;</span><span class="p">:</span> <span class="n">state_triple</span><span class="p">[</span><span class="s1">&#39;c_state_init&#39;</span><span class="p">],</span>
+                            <span class="s1">&#39;h_state_init&#39;</span><span class="p">:</span> <span class="n">state_triple</span><span class="p">[</span><span class="s1">&#39;h_state_init&#39;</span><span class="p">]}</span>
+
+                <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">jagged</span><span class="p">:</span>
+                    <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;lens&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">5</span><span class="p">]</span> <span class="o">-</span> <span class="n">skipsos</span><span class="p">]</span> <span class="o">*</span> <span class="n">args</span><span class="o">.</span><span class="n">numsteps</span>
+                    <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;masks&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_mask</span><span class="p">(</span><span class="n">seq_length</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="p">,</span> <span class="n">sentence_length</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="p">)</span> <span class="k">for</span>
+                                         <span class="n">seq_length</span> <span class="ow">in</span> <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;lens&#39;</span><span class="p">]]</span>
+
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">])):</span>
+                        <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;lens&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> \
+                            <span class="s1">&#39;Sequence found greater than num_tokens_predicted&#39;</span>
+                        <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;lens&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;lens&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> \
+                            <span class="s1">&#39;Sequence lengths must be greater than zero.&#39;</span> \
+                            <span class="s1">&#39;Found zero length sequence in datadict[&quot;lengths&quot;]: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;lens&#39;</span><span class="p">]</span>
+                <span class="n">first_output_context_state</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">get_collection</span><span class="p">(</span><span class="s1">&#39;context_state&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">eval_tensors</span> <span class="o">=</span> <span class="p">([</span><span class="n">total_loss</span><span class="p">,</span>
+                                 <span class="n">tf</span><span class="o">.</span><span class="n">get_collection</span><span class="p">(</span><span class="s1">&#39;context_vector&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span>
+                                 <span class="n">tf</span><span class="o">.</span><span class="n">get_collection</span><span class="p">(</span><span class="s1">&#39;first_line_loss_matrix&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">+</span>
+                                 <span class="p">[</span><span class="n">state_tuple</span><span class="o">.</span><span class="n">c</span> <span class="k">for</span> <span class="n">state_tuple</span> <span class="ow">in</span> <span class="n">first_output_context_state</span><span class="p">]</span> <span class="o">+</span>
+                                 <span class="p">[</span><span class="n">state_tuple</span><span class="o">.</span><span class="n">h</span> <span class="k">for</span> <span class="n">state_tuple</span> <span class="ow">in</span> <span class="n">first_output_context_state</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># Ordinary batching and matrix flush batching</span>
+                <span class="n">batch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+                <span class="n">endx</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="p">)</span>
+                <span class="n">endt</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="p">)</span>
+                <span class="n">datadict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;line&#39;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">],</span>
+                            <span class="s1">&#39;second&#39;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">],</span>
+                            <span class="s1">&#39;day&#39;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">],</span>
+                            <span class="s1">&#39;user&#39;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">3</span><span class="p">],</span>
+                            <span class="s1">&#39;red&#39;</span><span class="p">:</span> <span class="n">batch</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">4</span><span class="p">],</span>
+                            <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">batch</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">5</span> <span class="o">+</span> <span class="n">jag</span> <span class="o">+</span> <span class="n">skipsos</span><span class="p">:</span><span class="n">endx</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">numsteps</span><span class="p">)],</span>
+                            <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">batch</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">6</span> <span class="o">+</span> <span class="n">jag</span> <span class="o">+</span> <span class="n">skipsos</span><span class="p">:</span><span class="n">endt</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">numsteps</span><span class="p">)],</span>
+                            <span class="s1">&#39;context_vector&#39;</span><span class="p">:</span> <span class="n">state_triple</span><span class="p">[</span><span class="s1">&#39;context_vector&#39;</span><span class="p">],</span>
+                            <span class="s1">&#39;c_state_init&#39;</span><span class="p">:</span> <span class="n">state_triple</span><span class="p">[</span><span class="s1">&#39;c_state_init&#39;</span><span class="p">],</span>
+                            <span class="s1">&#39;h_state_init&#39;</span><span class="p">:</span> <span class="n">state_triple</span><span class="p">[</span><span class="s1">&#39;h_state_init&#39;</span><span class="p">]}</span>
+
+                <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">jagged</span><span class="p">:</span>
+                    <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;lens&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">batch</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">5</span><span class="p">]</span> <span class="o">-</span> <span class="n">skipsos</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">numsteps</span><span class="p">)]</span>
+                    <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;masks&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_mask</span><span class="p">(</span><span class="n">seq_length</span><span class="o">-</span><span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="o">-</span><span class="n">args</span><span class="o">.</span><span class="n">skipsos</span><span class="p">,</span>
+                                                  <span class="n">sentence_length</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="p">)</span> <span class="k">for</span> <span class="n">seq_length</span> <span class="ow">in</span> <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;lens&#39;</span><span class="p">]]</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">])):</span>
+                        <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;lens&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> \
+                            <span class="s1">&#39;Sequence found greater than num_tokens_predicted&#39;</span>
+                        <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;lens&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;lens&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> \
+                            <span class="s1">&#39;Sequence lengths must be greater than zero.&#39;</span> \
+                            <span class="s1">&#39;Found zero length sequence in datadict[&quot;lengths&quot;]: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;lens&#39;</span><span class="p">]</span>
+
+                <span class="n">eval_tensors</span> <span class="o">=</span> <span class="p">([</span><span class="n">total_loss</span><span class="p">,</span> <span class="n">context_vector</span><span class="p">,</span> <span class="n">line_loss_matrix</span><span class="p">]</span> <span class="o">+</span>
+                                <span class="p">[</span><span class="n">state_tuple</span><span class="o">.</span><span class="n">c</span> <span class="k">for</span> <span class="n">state_tuple</span> <span class="ow">in</span> <span class="n">context_state</span><span class="p">]</span> <span class="o">+</span>
+                                <span class="p">[</span><span class="n">state_tuple</span><span class="o">.</span><span class="n">h</span> <span class="k">for</span> <span class="n">state_tuple</span> <span class="ow">in</span> <span class="n">context_state</span><span class="p">])</span>
+
+            <span class="c1"># output dims: 0: Nothing, 1 (total_loss): scalar, 2 (context_vector): num_users X hidden_size,</span>
+            <span class="c1"># 3 (line_loss_matrix): num_users X num_steps</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">tiered_network_model</span><span class="o">.</span><span class="n">train_step</span><span class="p">(</span><span class="n">datadict</span><span class="p">,</span> <span class="n">eval_tensors</span><span class="o">=</span><span class="n">eval_tensors</span><span class="p">,</span>
+                                                     <span class="n">update</span><span class="o">=</span><span class="n">do_update</span><span class="p">)</span>
+            <span class="n">loss</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">loss_matrix</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">output</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">output</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+            <span class="n">current_context_state</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="mi">4</span><span class="p">:</span><span class="mi">4</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">context_layers</span><span class="p">)]</span>
+            <span class="n">current_context_hidden</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="mi">4</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">context_layers</span><span class="p">):</span><span class="mi">4</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">context_layers</span><span class="p">)]</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">update_state_triples</span><span class="p">([</span><span class="n">context</span><span class="p">,</span> <span class="n">current_context_state</span><span class="p">,</span> <span class="n">current_context_hidden</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;day&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                                <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;line&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                                                <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;second&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                                                <span class="n">mode</span><span class="p">[</span><span class="n">do_update</span><span class="p">],</span>
+                                                <span class="n">f</span><span class="p">,</span>
+                                                <span class="n">data</span><span class="o">.</span><span class="n">line_num</span><span class="p">,</span> <span class="n">loss</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">loss</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Exiting due to divergence!&#39;</span><span class="p">)</span>
+                <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">is_training</span><span class="p">:</span>
+                <span class="n">num_processed</span> <span class="o">+=</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">stragglers</span><span class="p">:</span>
+                    <span class="k">assert</span> <span class="n">loss_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">loss_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;Batch size </span><span class="si">%s</span><span class="s1"> is different from output size </span><span class="si">%s</span><span class="s1">. May be losing datapoints.&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">loss_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+                    <span class="n">write_results</span><span class="p">(</span><span class="n">datadict</span><span class="p">,</span> <span class="n">loss_matrix</span><span class="p">,</span> <span class="n">outfile</span><span class="p">,</span> <span class="n">batch_num</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">assert</span> <span class="n">loss_matrix</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;Batch size is different from output size. May be losing datapoints.&#39;</span>
+                    <span class="n">write_results</span><span class="p">(</span><span class="n">datadict</span><span class="p">,</span> <span class="n">loss_matrix</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="n">outfile</span><span class="p">,</span> <span class="n">batch_num</span><span class="p">)</span>
+            <span class="n">batch</span><span class="p">,</span> <span class="n">state_triple</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">next_batch</span><span class="p">()</span>
+            <span class="n">batch_num</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">state_triples</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">user_logs</span><span class="p">,</span> <span class="n">num_processed</span>
+
+    <span class="n">weekend_days</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="s2">&quot;weekend_days&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">test</span><span class="p">:</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="s2">&quot;test_files&quot;</span><span class="p">]</span>  <span class="c1"># 5000 lines from each of day 0, day 1 and day 2</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;.txt&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="s2">&quot;num_days&quot;</span><span class="p">])</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">weekend_days</span><span class="p">]</span>
+    <span class="n">states1</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">logs1</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">number_processed</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">files</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">states1</span><span class="p">,</span> <span class="n">logs1</span><span class="p">,</span> <span class="n">num_processed</span> <span class="o">=</span> <span class="n">trainday</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">states1</span><span class="p">,</span> <span class="n">logs1</span><span class="p">)</span>
+        <span class="n">states2</span><span class="p">,</span> <span class="n">logs2</span><span class="p">,</span> <span class="n">num_processed</span> <span class="o">=</span> <span class="n">trainday</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">files</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">states1</span><span class="p">,</span> <span class="n">logs1</span><span class="p">)</span>
+        <span class="n">number_processed</span> <span class="o">+=</span> <span class="n">num_processed</span>
+    <span class="n">outfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">total_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;elapsed time: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">total_time</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;mv /tmp/lanl_results/</span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">results_file</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">results_folder</span> <span class="o">+</span> <span class="n">results_file</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;number processed&#39;</span><span class="p">,</span> <span class="n">number_processed</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Batelle Memorial Institute.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.01',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

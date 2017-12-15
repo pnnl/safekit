@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: sphinx-argparse
+Version: 0.1.15
+Summary: Sphinx extension that automatically document argparse commands and options
+Home-page: UNKNOWN
+Author: Aleksandr Rudakov
+Author-email: ribozz@gmail.com
+License: MIT
+Description: UNKNOWN
+Platform: UNKNOWN

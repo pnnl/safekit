@@ -1,0 +1,375 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>graph_training_utils &mdash; safekit 0.01 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="safekit 0.01 documentation" href="index.html"/>
+        <link rel="next" title="util" href="util.html"/>
+        <link rel="prev" title="batch" href="batch.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> safekit
+          
+
+          
+            
+            <img src="_static/pnnl.jpg" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.01
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tf_ops.html">tf_ops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="batch.html">batch</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">graph_training_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">util</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="models.html">models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">features</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">safekit</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>graph_training_utils</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/graph_training_utils.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-graph_training_utils">
+<span id="graph-training-utils"></span><h1>graph_training_utils<a class="headerlink" href="#module-graph_training_utils" title="Permalink to this headline">¶</a></h1>
+<p>Utilities for training the parameters of tensorflow computational graphs.</p>
+<dl class="class">
+<dt id="graph_training_utils.EarlyStop">
+<em class="property">class </em><code class="descclassname">graph_training_utils.</code><code class="descname">EarlyStop</code><span class="sig-paren">(</span><em>badlimit=20</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/graph_training_utils.html#EarlyStop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#graph_training_utils.EarlyStop" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class for determining when to stop a training while loop by a bad count criterion.
+If the data is exhausted or the model’s performance hasn’t improved for <em>badlimit</em> training
+steps, the __call__ function returns false. Otherwise it returns true.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>badlimit</strong> – Limit of for number of training steps without improvement for early stopping.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="graph_training_utils.EarlyStop.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><em>mat</em>, <em>loss</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/graph_training_utils.html#EarlyStop.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#graph_training_utils.EarlyStop.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a boolean for customizable stopping criterion.
+For first loop iteration set loss to sys.float_info.max.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mat</strong> – Current batch of features for training.</li>
+<li><strong>loss</strong> – Current loss during training.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">boolean, True when mat is not None and self.badcount &lt; self.badlimit and loss != inf, nan.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="graph_training_utils.ModelRunner">
+<em class="property">class </em><code class="descclassname">graph_training_utils.</code><code class="descname">ModelRunner</code><span class="sig-paren">(</span><em>loss</em>, <em>ph_dict</em>, <em>learnrate=0.01</em>, <em>opt='adam'</em>, <em>debug=False</em>, <em>decay=True</em>, <em>decay_rate=0.99</em>, <em>decay_steps=20</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/graph_training_utils.html#ModelRunner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#graph_training_utils.ModelRunner" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class for gradient descent training tensorflow models.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>loss</strong> – The objective function for optimization strategy.</li>
+<li><strong>ph_dict</strong> – A dictionary of names (str) to tensorflow placeholders.</li>
+<li><strong>learnrate</strong> – The step size for gradient descent.</li>
+<li><strong>opt</strong> – Optimization algorithm can be ‘adam’, or ‘grad’</li>
+<li><strong>debug</strong> – Whether or not to print debugging info.</li>
+<li><strong>decay</strong> – (boolean) Whether or not to use a learn rate with exponential decay.</li>
+<li><strong>decay_rate</strong> – The rate parameter for exponential decay of learn rate.</li>
+<li><strong>decay_steps</strong> – The number of training steps to decay learn rate.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="graph_training_utils.ModelRunner.eval">
+<code class="descname">eval</code><span class="sig-paren">(</span><em>datadict</em>, <em>eval_tensors</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/graph_training_utils.html#ModelRunner.eval"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#graph_training_utils.ModelRunner.eval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluates tensors without effecting parameters of model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>datadict</strong> – A dictionary of names (str) matching names in ph_dict to numpy matrices for this mini-batch.</li>
+<li><strong>eval_tensors</strong> – Tensors from computational graph to evaluate as numpy matrices.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A list of evaluated tensors as numpy matrices.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="graph_training_utils.ModelRunner.train_step">
+<code class="descname">train_step</code><span class="sig-paren">(</span><em>datadict</em>, <em>eval_tensors=[]</em>, <em>update=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/graph_training_utils.html#ModelRunner.train_step"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#graph_training_utils.ModelRunner.train_step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs a training step of gradient descent with given optimization strategy.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>datadict</strong> – A dictionary of names (str) matching names in ph_dict to numpy matrices for this mini-batch.</li>
+<li><strong>eval_tensors</strong> – (list of Tensors) Tensors to evaluate along with train_op.</li>
+<li><strong>update</strong> – (boolean) Whether to perform a gradient update this train step</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A list of numpy arrays for eval_tensors. First element is None.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="graph_training_utils.get_feed_dict">
+<code class="descclassname">graph_training_utils.</code><code class="descname">get_feed_dict</code><span class="sig-paren">(</span><em>datadict</em>, <em>ph_dict</em>, <em>train=1</em>, <em>debug=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/graph_training_utils.html#get_feed_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#graph_training_utils.get_feed_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function for pairing placeholders of a tensorflow computational graph with numpy arrays.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>datadict</strong> – A dictionary with keys matching keys in ph_dict, and values are numpy arrays.</li>
+<li><strong>ph_dict</strong> – A dictionary where the keys match keys in datadict and values are placeholder tensors.</li>
+<li><strong>train</strong> – {1,0}. Different values get fed to placeholders for dropout probability, and batch norm statistics
+depending on if model is training or evaluating.</li>
+<li><strong>debug</strong> – (boolean) Whether or not to print dimensions of contents of placeholderdict, and datadict.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A feed dictionary with keys of placeholder tensors and values of numpy matrices.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="util.html" class="btn btn-neutral float-right" title="util" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="batch.html" class="btn btn-neutral" title="batch" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Batelle Memorial Institute.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.01',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

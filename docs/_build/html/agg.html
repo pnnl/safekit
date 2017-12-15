@@ -1,0 +1,525 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Aggregate Multivariate Autoencoders &mdash; safekit 0.01 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="safekit 0.01 documentation" href="index.html"/>
+        <link rel="up" title="models" href="models.html"/>
+        <link rel="next" title="Network Language Models" href="lm.html"/>
+        <link rel="prev" title="models" href="models.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> safekit
+          
+
+          
+            
+            <img src="_static/pnnl.jpg" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.01
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="tf_ops.html">tf_ops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="batch.html">batch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph_training_utils.html">graph_training_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">util</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="models.html">models</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Aggregate Multivariate Autoencoders</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#dnn-agg">dnn_agg</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#lstm-agg">lstm_agg</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lm.html">Network Language Models</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">features</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">safekit</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="models.html">models</a> &raquo;</li>
+        
+      <li>Aggregate Multivariate Autoencoders</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/agg.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="aggregate-multivariate-autoencoders">
+<h1>Aggregate Multivariate Autoencoders<a class="headerlink" href="#aggregate-multivariate-autoencoders" title="Permalink to this headline">¶</a></h1>
+<img alt="_images/system.png" src="_images/system.png" />
+<div class="section" id="dnn-agg">
+<h2>dnn_agg<a class="headerlink" href="#dnn-agg" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">dnn_agg</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">learnrate</span> <span class="n">LEARNRATE</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">numlayers</span> <span class="n">NUMLAYERS</span><span class="p">]</span>
+               <span class="p">[</span><span class="o">-</span><span class="n">hiddensize</span> <span class="n">HIDDENSIZE</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">mb</span> <span class="n">MB</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">act</span> <span class="n">ACT</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">norm</span> <span class="n">NORM</span><span class="p">]</span>
+               <span class="p">[</span><span class="o">-</span><span class="n">keep_prob</span> <span class="n">KEEP_PROB</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">debug</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">dist</span> <span class="n">DIST</span><span class="p">]</span>
+               <span class="p">[</span><span class="o">-</span><span class="n">maxbadcount</span> <span class="n">MAXBADCOUNT</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">embedding_ratio</span> <span class="n">EMBEDDING_RATIO</span><span class="p">]</span>
+               <span class="p">[</span><span class="o">-</span><span class="n">min_embed</span> <span class="n">MIN_EMBED</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">max_embed</span> <span class="n">MAX_EMBED</span><span class="p">]</span>
+               <span class="p">[</span><span class="o">-</span><span class="n">verbose</span> <span class="n">VERBOSE</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">variance_floor</span> <span class="n">VARIANCE_FLOOR</span><span class="p">]</span>
+               <span class="p">[</span><span class="o">-</span><span class="n">initrange</span> <span class="n">INITRANGE</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">decay_rate</span> <span class="n">DECAY_RATE</span><span class="p">]</span>
+               <span class="p">[</span><span class="o">-</span><span class="n">decay_steps</span> <span class="n">DECAY_STEPS</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">alpha</span> <span class="n">ALPHA</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">input_norm</span><span class="p">]</span>
+               <span class="p">[</span><span class="o">-</span><span class="n">refresh_ratio</span> <span class="n">REFRESH_RATIO</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">ratio</span> <span class="n">RATIO</span> <span class="p">[</span><span class="n">RATIO</span> <span class="o">...</span><span class="p">]]</span>
+               <span class="p">[</span><span class="o">-</span><span class="n">pool_size</span> <span class="n">POOL_SIZE</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">random_seed</span> <span class="n">RANDOM_SEED</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">replay</span><span class="p">]</span>
+               <span class="p">[</span><span class="o">-</span><span class="n">delimiter</span> <span class="n">DELIMITER</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">skipheader</span><span class="p">]</span>
+               <span class="n">datafile</span> <span class="n">results_folder</span> <span class="n">dataspecs</span>
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>Positional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd>datafile</kbd></td>
+<td>The csv data file for our unsupervised training.fields: day, user, redcount, [count1, count2, …., count408]</td></tr>
+<tr><td class="option-group">
+<kbd>results_folder</kbd></td>
+<td>The folder to print results to.</td></tr>
+<tr><td class="option-group">
+<kbd>dataspecs</kbd></td>
+<td>Filename of json file with specification of feature indices.</td></tr>
+</tbody>
+</table>
+</dd>
+<dt>Options:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-learnrate=0.001</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Step size for gradient descent.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-numlayers=3</span></kbd></td>
+<td>Number of hidden layers.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-hiddensize=20</span></kbd></td>
+<td>Number of hidden units in hidden layers.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-mb=256</span></kbd></td>
+<td>The mini batch size for stochastic gradient descent.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-act=tanh</span></kbd></td>
+<td>May be “tanh” or “relu”</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-norm=none</span></kbd></td>
+<td>Can be “layer”, “batch”, or “none”</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-keep_prob</span></kbd></td>
+<td>Percent of nodes to keep for dropout layers.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-debug=False</span></kbd></td>
+<td>Use this flag to print feed dictionary contents and dimensions.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-dist=diag</span></kbd></td>
+<td>“diag” or “ident”. Describes whether to model multivariate guassian with identity, or arbitrary diagonal covariance matrix.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-maxbadcount=20</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Threshold for early stopping.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-embedding_ratio=0.75</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>For determining size of embeddings for categorical features.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-min_embed=2</span></kbd></td>
+<td>Minimum size for embeddings of categorical features.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-max_embed=1000</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Maximum size for embeddings of categorical features.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-verbose=0</span></kbd></td>
+<td>1 to print full loss contributors.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-variance_floor=0.01</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Parameter for diagonal MVN learning.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-initrange=1.0</span></kbd></td>
+<td>For weight initialization.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-decay_rate=1.0</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Exponential learn rate decay for gradient descent.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-decay_steps=20</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Number of updates to perform learn rate decay</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-alpha=0.99</span></kbd></td>
+<td>Parameter for exponential moving average and variance</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-input_norm=False</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Use this flag for online normalization</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-refresh_ratio=0.5</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>The proportion of the new mini-batch to use in refreshing the pool.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-ratio=[1, 1]</span></kbd></td>
+<td>(tuple) (x, y): Number of new batches of data points x and number of old data points y.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-pool_size=9000</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>The scale of the pool.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-random_seed</span></kbd></td>
+<td>For reproducible results</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-replay=False</span></kbd></td>
+<td>Use this flag for replay learning</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-delimiter= </span></kbd></td>
+<td>Delimiter for input text file. You should be using ‘ ‘ for the dayshuffled cert.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-skipheader=False</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Whether or not to skip first line of input file.</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</div>
+<div class="section" id="lstm-agg">
+<h2>lstm_agg<a class="headerlink" href="#lstm-agg" title="Permalink to this headline">¶</a></h2>
+<p>Cert Aggregate Feature LSTM.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">lstm_agg</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">num_steps</span> <span class="n">NUM_STEPS</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">learnrate</span> <span class="n">LEARNRATE</span><span class="p">]</span>
+                <span class="p">[</span><span class="o">-</span><span class="n">initrange</span> <span class="n">INITRANGE</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">numlayers</span> <span class="n">NUMLAYERS</span><span class="p">]</span>
+                <span class="p">[</span><span class="o">-</span><span class="n">hiddensize</span> <span class="n">HIDDENSIZE</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">verbose</span> <span class="n">VERBOSE</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">mb</span> <span class="n">MB</span><span class="p">]</span>
+                <span class="p">[</span><span class="o">-</span><span class="n">embedding_ratio</span> <span class="n">EMBEDDING_RATIO</span><span class="p">]</span>
+                <span class="p">[</span><span class="o">-</span><span class="n">min_embedding</span> <span class="n">MIN_EMBEDDING</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">max_embedding</span> <span class="n">MAX_EMBEDDING</span><span class="p">]</span>
+                <span class="p">[</span><span class="o">-</span><span class="n">use_next_time_step</span> <span class="n">USE_NEXT_TIME_STEP</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">act</span> <span class="n">ACT</span><span class="p">]</span>
+                <span class="p">[</span><span class="o">-</span><span class="n">dist</span> <span class="n">DIST</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">variance_floor</span> <span class="n">VARIANCE_FLOOR</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">norm</span> <span class="n">NORM</span><span class="p">]</span>
+                <span class="p">[</span><span class="o">-</span><span class="n">keep_prob</span> <span class="n">KEEP_PROB</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">debug</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">random_seed</span> <span class="n">RANDOM_SEED</span><span class="p">]</span>
+                <span class="p">[</span><span class="o">-</span><span class="n">replay_ratio</span> <span class="n">REPLAY_RATIO</span> <span class="p">[</span><span class="n">REPLAY_RATIO</span> <span class="o">...</span><span class="p">]]</span>
+                <span class="p">[</span><span class="o">-</span><span class="n">delimiter</span> <span class="n">DELIMITER</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">maxbadcount</span> <span class="n">MAXBADCOUNT</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">residual</span><span class="p">]</span>
+                <span class="p">[</span><span class="o">-</span><span class="n">skipheader</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">alpha</span> <span class="n">ALPHA</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">input_norm</span><span class="p">]</span>
+                <span class="n">datafile</span> <span class="n">results_folder</span> <span class="n">dataspecs</span>
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>Positional arguments:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd>datafile</kbd></td>
+<td>Path to data file.</td></tr>
+<tr><td class="option-group">
+<kbd>results_folder</kbd></td>
+<td>Folder where to write losses.</td></tr>
+<tr><td class="option-group">
+<kbd>dataspecs</kbd></td>
+<td>Name of json file with specs for splitting data.</td></tr>
+</tbody>
+</table>
+</dd>
+<dt>Options:</dt>
+<dd><table class="first last docutils option-list" frame="void" rules="none">
+<col class="option" />
+<col class="description" />
+<tbody valign="top">
+<tr><td class="option-group">
+<kbd><span class="option">-num_steps=5</span></kbd></td>
+<td>Number of time steps for truncated backpropagation.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-learnrate=0.01</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Step size for gradient descent.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-initrange=0.0001</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>For initialization of weights.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-numlayers=3</span></kbd></td>
+<td>Number of hidden layers</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-hiddensize=3</span></kbd></td>
+<td>Number of hidden nodes per layer</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-verbose=1</span></kbd></td>
+<td>Level to print training progress and/or other details.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-mb=21</span></kbd></td>
+<td>The max number of events in the structured mini_batch.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-embedding_ratio=0.5</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Embedding_ratio * num_classes = embedding size.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-min_embedding=5</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Minimum embedding size.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-max_embedding=500</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Maximum embedding size.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-use_next_time_step=0</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Whether to predict next time step or autoencode.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-act=relu</span></kbd></td>
+<td>A string denoting the activation function.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-dist=diag</span></kbd></td>
+<td>A string denoting the multivariate normal type for prediction.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-variance_floor=0.1</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Float to derive variance floor.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-norm</span></kbd></td>
+<td>“layer” for layer normalization. Default is None.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-keep_prob</span></kbd></td>
+<td>Percent of nodes to keep for dropout layers.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-debug=False</span></kbd></td>
+<td>Use this flag to print feed dictionary contents and dimensions.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-random_seed=5</span></kbd></td>
+<td>Random seed for reproducible experiments.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-replay_ratio=(1, 0)</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Undocumented</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-delimiter= </span></kbd></td>
+<td>Delimiter for input text file. You should be using ‘ ‘ for the dayshuffled cert.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-maxbadcount=100</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>For stopping training when loss does not improve.</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-residual=False</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Flag for calculating residual (difference between sequential actions) instead of next action</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-skipheader=False</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Whether or not to skip first line of input file.</td></tr>
+<tr><td class="option-group">
+<kbd><span class="option">-alpha=0.99</span></kbd></td>
+<td>Parameter for exponential moving average and variance</td></tr>
+<tr><td class="option-group" colspan="2">
+<kbd><span class="option">-input_norm=False</span></kbd></td>
+</tr>
+<tr><td>&#160;</td><td>Use this flag for online normalization</td></tr>
+</tbody>
+</table>
+</dd>
+</dl>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="lm.html" class="btn btn-neutral float-right" title="Network Language Models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="models.html" class="btn btn-neutral" title="models" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Batelle Memorial Institute.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.01',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

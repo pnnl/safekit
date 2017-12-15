@@ -1,0 +1,342 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>merge_streams &mdash; safekit 0.01 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="safekit 0.01 documentation" href="../index.html"/>
+        <link rel="up" title="Module code" href="index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> safekit
+          
+
+          
+            
+            <img src="../_static/pnnl.jpg" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.01
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../tf_ops.html">tf_ops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../batch.html">batch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../graph_training_utils.html">graph_training_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../util.html">util</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../features.html">features</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">safekit</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Module code</a> &raquo;</li>
+        
+      <li>merge_streams</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for merge_streams</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+
+
+<div class="viewcode-block" id="Merge"><a class="viewcode-back" href="../features.html#merge_streams.Merge">[docs]</a><span class="k">class</span> <span class="nc">Merge</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Live merging of csv files. The call of this object is a generator function</span>
+<span class="sd">    which interleaves lines from a collection of files, ordered by a sort_column</span>
+<span class="sd">    parameter.</span>
+
+<span class="sd">    Assumes:</span>
+<span class="sd">        (i) Individual files are ordered by ascending sort column values.</span>
+<span class="sd">        (ii) Individual files have headers with one column named the same as &lt;sort_column&gt; parameter.</span>
+<span class="sd">        (iii) Files to merge are in the same folder specified by &lt;file_path&gt; parameter&gt;.</span>
+
+<span class="sd">    The generator operates as follows:</span>
+<span class="sd">        (i) Upon initialization, aligned lists of files, file names, file headers, and</span>
+<span class="sd">            the first non-header line (split on delimiter with file-type index appended)</span>
+<span class="sd">            of each file are constructed.</span>
+<span class="sd">        (ii) When the Merge object is called the list of lines is sorted by time-stamp specified by &lt;sort_column&gt;</span>
+<span class="sd">             and &lt;date_format&gt; parameters.</span>
+<span class="sd">        (iii) The line (split on delimiter) with the earliest time stamp is returned along with</span>
+<span class="sd">              the name of the file it came from (determined by appended event_type int).</span>
+<span class="sd">        (iv) The line is replaced from the file it came from (determined by appended event_type int).</span>
+<span class="sd">        (v) If there are no more lines left in the file then it is closed and list entries associated with this file are</span>
+<span class="sd">            removed from lists (determined by appended event_type int).</span>
+<span class="sd">        (vi) Concludes generating when all files are ended.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="o">=</span><span class="s1">&#39;./&#39;</span><span class="p">,</span>
+                 <span class="n">file_list</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;short_t_toy_auth.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;short_t_toy_proc.txt&#39;</span><span class="p">],</span>
+                 <span class="n">sort_column</span><span class="o">=</span><span class="s1">&#39;time&#39;</span><span class="p">,</span>
+                 <span class="n">date_format</span><span class="o">=</span><span class="s1">&#39;int&#39;</span><span class="p">,</span>
+                 <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param filepath: Path to folder with files to merge.</span>
+<span class="sd">        :param file_list: List of names of files to merge.</span>
+<span class="sd">        :param sort_column: Column to sort lines of files on for sequential ordering of log lines.</span>
+<span class="sd">        :param date_format: Can be any format string which makes sense to datetime.strptime or &#39;int&#39; for simple integer time stamps.</span>
+<span class="sd">        :param delimiter: Delimiter of csv columns, e.g. &#39;,&#39;, &#39; &#39; ...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">filepath</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+            <span class="n">filepath</span> <span class="o">+=</span> <span class="s1">&#39;/&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_list</span> <span class="o">=</span> <span class="n">file_list</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filepath</span> <span class="o">=</span> <span class="n">filepath</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="nb">open</span><span class="p">(</span><span class="n">filepath</span> <span class="o">+</span> <span class="n">f</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">file_list</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sorters</span> <span class="o">=</span> <span class="p">[</span><span class="n">header</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">sort_column</span><span class="p">)</span> <span class="k">for</span> <span class="n">header</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_types</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">delimiter</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_lengths</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">)</span> <span class="k">for</span> <span class="n">header</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">auth_index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">proc_index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">date_format</span> <span class="o">==</span> <span class="s1">&#39;int&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sort_function</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sorters</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sort_function</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sorters</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]],</span> <span class="bp">self</span><span class="o">.</span><span class="n">date_format</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">headers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: A list of headers (split by delimiter) from files being merged</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_headers</span>
+
+<div class="viewcode-block" id="Merge.next_event"><a class="viewcode-back" href="../features.html#merge_streams.Merge.next_event">[docs]</a>    <span class="k">def</span> <span class="nf">next_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_type</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param event_type: Integer associated with a file to read from.</span>
+<span class="sd">        :return: Next event (line from file split on delimiter with type appended) from file associated with event_type.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">[</span><span class="n">event_type</span><span class="p">]</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="n">event_type</span><span class="p">]</span></div>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: (tuple) filename, Next event (line from file split on delimiter) according to time stamp.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="c1"># try:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                    <span class="k">return</span>
+                <span class="c1"># else:</span>
+                <span class="c1">#     event_type = self.events[0][:-1]</span>
+                <span class="c1">#     least_time_event = self.events[0][:-1]</span>
+                <span class="c1">#     self.events[0] = self.next_event(event_type)</span>
+                <span class="c1">#     yield self.file_list[event_type], least_time_event</span>
+
+            <span class="n">least_time_event</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sort_function</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">event_type</span> <span class="o">=</span> <span class="n">least_time_event</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_list</span><span class="p">[</span><span class="n">event_type</span><span class="p">],</span> <span class="n">least_time_event</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">new_event</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_event</span><span class="p">(</span><span class="n">event_type</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">new_event</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">[</span><span class="n">event_type</span><span class="p">]</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">event_type</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sorters</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">event_type</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">event_types</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">event_type</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">event_type</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">file_list</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">event_type</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">event_lengths</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">event_type</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">return</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="n">event_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_event</span>
+                <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="n">event_type</span><span class="p">])</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_lengths</span><span class="p">[</span><span class="n">event_type</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span></div>
+
+
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Batelle Memorial Institute.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.01',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

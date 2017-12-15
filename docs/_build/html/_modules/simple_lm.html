@@ -1,0 +1,517 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>simple_lm &mdash; safekit 0.01 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="safekit 0.01 documentation" href="../index.html"/>
+        <link rel="up" title="Module code" href="index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> safekit
+          
+
+          
+            
+            <img src="../_static/pnnl.jpg" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.01
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../tf_ops.html">tf_ops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../batch.html">batch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../graph_training_utils.html">graph_training_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../util.html">util</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../models.html">models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../features.html">features</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">safekit</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Module code</a> &raquo;</li>
+        
+      <li>simple_lm</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for simple_lm</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Simple language model code for network modeling.</span>
+
+<span class="sd">File name convention:</span>
+<span class="sd">---------------------</span>
+
+<span class="sd">- lr: learnrate for gradient descent</span>
+<span class="sd">- nl: number of stacked lstm layers</span>
+<span class="sd">- hs: size of hidden layers (presumes all layers have same number of hidden units)</span>
+<span class="sd">- mb: Size of mini-batch</span>
+<span class="sd">- bc: max bad count for early stopping</span>
+<span class="sd">- em: Size of token embeddings</span>
+<span class="sd">- rs: Random seed for reproducible results</span>
+
+<span class="sd">stdout</span>
+<span class="sd">------</span>
+
+<span class="sd">For each mini-batch the following is printed to standard output ::</span>
+
+<span class="sd">    batchsize line_number second status filename index current_loss</span>
+
+<span class="sd">Where:</span>
+
+<span class="sd">- batchsize: The size of the mini-batch</span>
+<span class="sd">- line_number: Line number from original auth.txt file (may be off by 1)</span>
+<span class="sd">- second: The second of the first event in the mini-batch</span>
+<span class="sd">- status: Whether the model is updating or merely forward propagating</span>
+<span class="sd">- filename: The current file being processed</span>
+<span class="sd">- index: The number of samples processed to date</span>
+<span class="sd">- current_loss: The average loss over the mini-batch</span>
+
+<span class="sd">File output:</span>
+<span class="sd">------------</span>
+<span class="sd">::</span>
+
+<span class="sd">    batch_num line second day user red loss</span>
+
+<span class="sd">Where:</span>
+
+<span class="sd">- batch_num: The mini-batch this event was a part of</span>
+<span class="sd">- line: Line number from original auth.txt file (may be off by 1)</span>
+<span class="sd">- second: The second which the event occurred on</span>
+<span class="sd">- day: The day the event occurred on</span>
+<span class="sd">- user: The user who performed the event</span>
+<span class="sd">- red: Whether this event was a labeled red team activity (1 for red team activity 0 otherwise)</span>
+<span class="sd">- loss: The anomaly score for this event</span>
+
+
+<span class="sd">Example calls</span>
+<span class="sd">-------------</span>
+
+<span class="sd">**Simple character based language model.** ::</span>
+
+<span class="sd">    python safekit/models/simple_lm.py results/ safekit/features/specs/lm/lanl_char_config.json data_examples/lanl/lm_feats/raw_day_split/ -test -skipsos -jagged</span>
+
+<span class="sd">.. Note :: The output results will be printed to /tmp/lanl_result/ and then moved to results/ upon completion</span>
+<span class="sd">      to avoid experiment slowdown of constant network traffic when using a distributed file system.</span>
+
+<span class="sd">Input Data</span>
+<span class="sd">----------</span>
+
+<span class="sd">The format of the input makes the following assumptions:</span>
+
+<span class="sd">- Input files are together in datafolder, one file for each day.</span>
+<span class="sd">- Input files are plain text files with one line of integers per log line representing meta data and the tokens from log text.</span>
+<span class="sd">- Input format for fixed length sequences ::</span>
+
+<span class="sd">    line_nums second day user red logtokenid1 .... logtokenid_SentenceLen</span>
+<span class="sd">- Zero paded Input format for jagged sequences ::</span>
+
+<span class="sd">    line_nums second day user red SentenceLen logtokenid1 .... logtokenid_SentenceLen 0 0 .... 0</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="c1"># So we can run this code on arbitrary environment which has tensorflow but not safekit installed</span>
+<span class="n">cyberpath</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">3</span><span class="p">])</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cyberpath</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">safekit.batch</span> <span class="k">import</span> <span class="n">OnlineBatcher</span>
+<span class="kn">from</span> <span class="nn">safekit.graph_training_utils</span> <span class="k">import</span> <span class="n">EarlyStop</span><span class="p">,</span> <span class="n">ModelRunner</span>
+<span class="kn">from</span> <span class="nn">safekit.tf_ops</span> <span class="k">import</span> <span class="n">lm_rnn</span><span class="p">,</span> <span class="n">bidir_lm_rnn</span>
+<span class="kn">from</span> <span class="nn">safekit.util</span> <span class="k">import</span> <span class="n">get_mask</span><span class="p">,</span> <span class="n">Parser</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="return_parser"><a class="viewcode-back" href="../lm.html#simple_lm.return_parser">[docs]</a><span class="k">def</span> <span class="nf">return_parser</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Defines and returns argparse ArgumentParser object.</span>
+
+<span class="sd">    :return: ArgumentParser</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">(</span><span class="s2">&quot;Simple token based rnn for network modeling.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;results_folder&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The folder to print results to.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;config&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The data spec.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;datafolder&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The folder where the data is stored.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-learnrate&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Step size for gradient descent.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-lm_layers&quot;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;A list of hidden layer sizes.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-context_layers&quot;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;decoy arg.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;-numsteps&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;decoy arg.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-mb&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The mini batch size for stochastic gradient descent.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-debug&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Use this flag to print feed dictionary contents and dimensions.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-maxbadcount&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Threshold for early stopping.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-em&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Size of embeddings for categorical features.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-encoding&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Can be &quot;oct&quot;, &quot;raw&quot; or &quot;word&quot;&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-random_seed&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Random seed for reproducible experiments.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-jagged&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Whether using sequences of variable length (Input should&#39;</span>
+                             <span class="s1">&#39;be zero-padded to max_sequence_length.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-skipsos&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Whether to skip a start of sentence token.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-bidir&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Whether to use bidirectional lstm for lower tier.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-test&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Whether to run on a subset of the data (5000 lines from days 1,2,3) or the entire set.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-verbose&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Whether to print loss during training.&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-delimiter&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Delimiter for input text file. You should be using &#39; &#39; for the dayshuffled cert.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-cell_type&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;lstm&#39;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Can be either &quot;lstm&quot;, &quot;ident_ran&quot;, or &quot;ran&quot;&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">parser</span></div>
+
+
+<div class="viewcode-block" id="write_results"><a class="viewcode-back" href="../lm.html#simple_lm.write_results">[docs]</a><span class="k">def</span> <span class="nf">write_results</span><span class="p">(</span><span class="n">datadict</span><span class="p">,</span> <span class="n">pointloss</span><span class="p">,</span> <span class="n">outfile</span><span class="p">,</span> <span class="n">batch</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Writes loss for each datapoint, along with meta-data to file.</span>
+
+<span class="sd">    :param datadict: Dictionary of data names (str) keys to numpy matrix values for this mini-batch.</span>
+<span class="sd">    :param pointloss: MB X 1 numpy array</span>
+<span class="sd">    :param outfile: Where to write results.</span>
+<span class="sd">    :param batch: The mini-batch number for these events.</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">for</span> <span class="n">line</span><span class="p">,</span> <span class="n">sec</span><span class="p">,</span> <span class="n">day</span><span class="p">,</span> <span class="n">usr</span><span class="p">,</span> <span class="n">red</span><span class="p">,</span> <span class="n">loss</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;line&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                                              <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;second&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                                              <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;day&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                                              <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                                              <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;red&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                                              <span class="n">pointloss</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()):</span>
+        <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%r</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">sec</span><span class="p">,</span> <span class="n">day</span><span class="p">,</span> <span class="n">usr</span><span class="p">,</span> <span class="n">red</span><span class="p">,</span> <span class="n">loss</span><span class="p">))</span></div>
+
+<span class="n">CELL</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;lstm&#39;</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">rnn_cell</span><span class="o">.</span><span class="n">BasicLSTMCell</span><span class="p">}</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="n">return_parser</span><span class="p">()</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+
+    <span class="n">direction</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;fwd&#39;</span><span class="p">,</span> <span class="s1">&#39;bidir&#39;</span><span class="p">)[</span><span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="p">]</span>
+    <span class="n">outfile_name</span> <span class="o">=</span> <span class="s2">&quot;simple_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">_</span><span class="si">%s</span><span class="s2">_lr_</span><span class="si">%s</span><span class="s2">_nl_</span><span class="si">%s</span><span class="s2">_hs_</span><span class="si">%s</span><span class="s2">_mb_</span><span class="si">%s</span><span class="s2">_bc_</span><span class="si">%s</span><span class="s2">_em_</span><span class="si">%s</span><span class="s2">_rs_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">direction</span><span class="p">,</span>
+                                                                                  <span class="n">args</span><span class="o">.</span><span class="n">encoding</span><span class="p">,</span>
+                                                                                  <span class="n">args</span><span class="o">.</span><span class="n">cell_type</span><span class="p">,</span>
+                                                                                  <span class="n">time</span><span class="o">.</span><span class="n">ctime</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">),</span>
+                                                                                  <span class="n">args</span><span class="o">.</span><span class="n">learnrate</span><span class="p">,</span>
+                                                                                  <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">lm_layers</span><span class="p">),</span>
+                                                                                  <span class="n">args</span><span class="o">.</span><span class="n">lm_layers</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                                                                  <span class="n">args</span><span class="o">.</span><span class="n">mb</span><span class="p">,</span>
+                                                                                  <span class="n">args</span><span class="o">.</span><span class="n">maxbadcount</span><span class="p">,</span>
+                                                                                  <span class="n">args</span><span class="o">.</span><span class="n">em</span><span class="p">,</span>
+                                                                                  <span class="n">args</span><span class="o">.</span><span class="n">random_seed</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">return_parser</span><span class="p">()</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="n">conf</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">results_folder</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">results_folder</span> <span class="o">+=</span> <span class="s1">&#39;/&#39;</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">set_random_seed</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">random_seed</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">random_seed</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">datafolder</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">datafolder</span> <span class="o">+=</span> <span class="s1">&#39;/&#39;</span>
+    <span class="k">if</span> <span class="s2">&quot;lanl_result&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="s2">&quot;/tmp&quot;</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;mkdir /tmp/lanl_result; chmod o+rwx /tmp/lanl_result&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="p">:</span>
+        <span class="n">language_model</span> <span class="o">=</span> <span class="n">lm_rnn</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">language_model</span> <span class="o">=</span> <span class="n">bidir_lm_rnn</span>
+    <span class="n">outfile</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;/tmp/lanl_result/&#39;</span> <span class="o">+</span> <span class="n">outfile_name</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+    <span class="n">tf</span><span class="o">.</span><span class="n">set_random_seed</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">random_seed</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">random_seed</span><span class="p">)</span>
+    <span class="n">sentence_length</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="s2">&quot;sentence_length&quot;</span><span class="p">]</span><span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">skipsos</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="p">)</span>
+    <span class="n">token_set_size</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="s2">&quot;token_set_size&quot;</span><span class="p">]</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">sentence_length</span><span class="p">])</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">sentence_length</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="p">])</span>
+    <span class="n">ph_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="n">t</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">jagged</span><span class="p">:</span>
+        <span class="n">seq_len</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">])</span>
+        <span class="n">ph_dict</span><span class="p">[</span><span class="s1">&#39;lengths&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">seq_len</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">seq_len</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">token_embed</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">truncated_normal</span><span class="p">([</span><span class="n">token_set_size</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">em</span><span class="p">]))</span>  <span class="c1"># Initial embeddings vocab X embedding size</span>
+
+    <span class="n">token_losses</span><span class="p">,</span> <span class="n">hidden_states</span><span class="p">,</span> <span class="n">final_hidden</span> <span class="o">=</span> <span class="n">language_model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">token_embed</span><span class="p">,</span>
+                                                               <span class="n">args</span><span class="o">.</span><span class="n">lm_layers</span><span class="p">,</span> <span class="n">seq_len</span><span class="o">=</span><span class="n">seq_len</span><span class="p">,</span>
+                                                               <span class="n">cell</span><span class="o">=</span><span class="n">CELL</span><span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">cell_type</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">jagged</span><span class="p">:</span>
+        <span class="n">ph_dict</span><span class="p">[</span><span class="s1">&#39;mask&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">sentence_length</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="p">])</span>
+        <span class="n">token_losses</span> <span class="o">*=</span> <span class="n">ph_dict</span><span class="p">[</span><span class="s1">&#39;mask&#39;</span><span class="p">]</span>
+        <span class="n">line_losses</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">token_losses</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># batch_size X 1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">line_losses</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">token_losses</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># batch_size X 1</span>
+    <span class="n">avgloss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">line_losses</span><span class="p">)</span>  <span class="c1"># scalar</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">ModelRunner</span><span class="p">(</span><span class="n">avgloss</span><span class="p">,</span> <span class="n">ph_dict</span><span class="p">,</span> <span class="n">learnrate</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">learnrate</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">debug</span><span class="p">,</span>
+                        <span class="n">decay</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="n">decay_rate</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span> <span class="n">decay_steps</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+
+    <span class="c1"># training loop</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">jag</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">jagged</span><span class="p">)</span>
+    <span class="n">skipsos</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">skipsos</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">trainday</span><span class="p">(</span><span class="n">is_training</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+        <span class="n">batch_num</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">OnlineBatcher</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">datafolder</span> <span class="o">+</span> <span class="n">f</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">mb</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+        <span class="n">raw_batch</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">next_batch</span><span class="p">()</span>
+        <span class="n">current_loss</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">float_info</span><span class="o">.</span><span class="n">max</span>
+        <span class="n">not_early_stop</span> <span class="o">=</span> <span class="n">EarlyStop</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">maxbadcount</span><span class="p">)</span>
+        <span class="n">endx</span> <span class="o">=</span> <span class="n">raw_batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="p">)</span>
+        <span class="n">endt</span> <span class="o">=</span> <span class="n">raw_batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="p">)</span>
+        <span class="n">continue_training</span> <span class="o">=</span> <span class="n">not_early_stop</span><span class="p">(</span><span class="n">raw_batch</span><span class="p">,</span> <span class="n">current_loss</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">continue_training</span><span class="p">:</span>  <span class="c1"># mat is not None and self.badcount &lt; self.badlimit and loss != inf, nan:</span>
+            <span class="n">datadict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;line&#39;</span><span class="p">:</span> <span class="n">raw_batch</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+                        <span class="s1">&#39;second&#39;</span><span class="p">:</span> <span class="n">raw_batch</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="s1">&#39;day&#39;</span><span class="p">:</span> <span class="n">raw_batch</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span>
+                        <span class="s1">&#39;user&#39;</span><span class="p">:</span> <span class="n">raw_batch</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">],</span>
+                        <span class="s1">&#39;red&#39;</span><span class="p">:</span> <span class="n">raw_batch</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">],</span>
+                        <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">raw_batch</span><span class="p">[:,</span> <span class="p">(</span><span class="mi">5</span><span class="o">+</span><span class="n">jag</span><span class="o">+</span><span class="n">skipsos</span><span class="p">):</span><span class="n">endx</span><span class="p">],</span>
+                        <span class="s1">&#39;t&#39;</span><span class="p">:</span> <span class="n">raw_batch</span><span class="p">[:,</span> <span class="p">(</span><span class="mi">6</span><span class="o">+</span><span class="n">jag</span><span class="o">+</span><span class="n">skipsos</span><span class="p">):</span><span class="n">endt</span><span class="p">]}</span>
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">jagged</span><span class="p">:</span>
+                <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;lengths&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw_batch</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">]</span>
+                <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;mask&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_mask</span><span class="p">(</span><span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;lengths&#39;</span><span class="p">]</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="o">-</span><span class="n">args</span><span class="o">.</span><span class="n">skipsos</span><span class="p">,</span> <span class="n">sentence_length</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">args</span><span class="o">.</span><span class="n">bidir</span><span class="p">)</span>
+                <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;lengths&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">x</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()[</span><span class="mi">1</span><span class="p">]),</span> <span class="s1">&#39;Sequence found greater than num_tokens_predicted&#39;</span>
+                <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;lengths&#39;</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;lengths&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> \
+                    <span class="s1">&#39;Sequence lengths must be greater than zero.&#39;</span> \
+                    <span class="s1">&#39;Found zero length sequence in datadict[&quot;lengths&quot;]: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;lengths&#39;</span><span class="p">]</span>
+            <span class="n">eval_tensors</span> <span class="o">=</span> <span class="p">[</span><span class="n">avgloss</span><span class="p">,</span> <span class="n">line_losses</span><span class="p">]</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">current_loss</span><span class="p">,</span> <span class="n">pointloss</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">train_step</span><span class="p">(</span><span class="n">datadict</span><span class="p">,</span> <span class="n">eval_tensors</span><span class="p">,</span>
+                                                              <span class="n">update</span><span class="o">=</span><span class="n">is_training</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">is_training</span><span class="p">:</span>
+                <span class="n">write_results</span><span class="p">(</span><span class="n">datadict</span><span class="p">,</span> <span class="n">pointloss</span><span class="p">,</span> <span class="n">outfile</span><span class="p">,</span> <span class="n">batch_num</span><span class="p">)</span>
+            <span class="n">batch_num</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> </span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">raw_batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                                <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;line&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                                                <span class="n">datadict</span><span class="p">[</span><span class="s1">&#39;second&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                                                <span class="p">(</span><span class="s1">&#39;fixed&#39;</span><span class="p">,</span> <span class="s1">&#39;update&#39;</span><span class="p">)[</span><span class="n">is_training</span><span class="p">],</span>
+                                                <span class="n">f</span><span class="p">,</span>
+                                                <span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+                                                <span class="n">current_loss</span><span class="p">))</span>
+            <span class="n">raw_batch</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">next_batch</span><span class="p">()</span>
+            <span class="n">continue_training</span> <span class="o">=</span> <span class="n">not_early_stop</span><span class="p">(</span><span class="n">raw_batch</span><span class="p">,</span> <span class="n">current_loss</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">continue_training</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+
+    <span class="n">weekend_days</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="s2">&quot;weekend_days&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">test</span><span class="p">:</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="s2">&quot;test_files&quot;</span><span class="p">]</span> <span class="c1"># 5000 lines from each of day 0, day 1 and day 2</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;.txt&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="s2">&quot;num_days&quot;</span><span class="p">])</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">weekend_days</span><span class="p">]</span>
+    <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;batch line second day user red loss</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">files</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">trainday</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="n">trainday</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">files</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">outfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">total_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;elapsed time: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">total_time</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;mv /tmp/lanl_result/</span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">outfile_name</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">results_folder</span> <span class="o">+</span> <span class="n">outfile_name</span><span class="p">))</span>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Batelle Memorial Institute.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.01',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

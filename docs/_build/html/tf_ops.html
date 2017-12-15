@@ -1,0 +1,755 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>tf_ops &mdash; safekit 0.01 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="safekit 0.01 documentation" href="index.html"/>
+        <link rel="next" title="batch" href="batch.html"/>
+        <link rel="prev" title="Authors" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> safekit
+          
+
+          
+            
+            <img src="_static/pnnl.jpg" class="logo" />
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.01
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">tf_ops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="batch.html">batch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="graph_training_utils.html">graph_training_utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">util</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="models.html">models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">features</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">safekit</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>tf_ops</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/tf_ops.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-tf_ops">
+<span id="tf-ops"></span><h1>tf_ops<a class="headerlink" href="#module-tf_ops" title="Permalink to this headline">¶</a></h1>
+<p>Functions for building tensorflow computational graph models.</p>
+<dl class="function">
+<dt id="tf_ops.batch_normalize">
+<code class="descclassname">tf_ops.</code><code class="descname">batch_normalize</code><span class="sig-paren">(</span><em>tensor_in</em>, <em>epsilon=1e-05</em>, <em>decay=0.999</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#batch_normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.batch_normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Batch Normalization:
+<a class="reference external" href="http://arxiv.org/pdf/1502.03167v3.pdf">Batch Normalization Accelerating Deep Network Training by Reducing Internal Covariate Shift</a></p>
+<p>An exponential moving average of means and variances in calculated to estimate sample mean
+and sample variance for evaluations. For testing pair placeholder is_training
+with [0] in feed_dict. For training pair placeholder is_training
+with [1] in feed_dict. Example:</p>
+<p>Let <strong>train = 1</strong> for training and <strong>train = 0</strong> for evaluation</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">bn_deciders</span> <span class="o">=</span> <span class="p">{</span><span class="n">decider</span><span class="p">:[</span><span class="n">train</span><span class="p">]</span> <span class="k">for</span> <span class="n">decider</span> <span class="ow">in</span> <span class="n">tf</span><span class="o">.</span><span class="n">get_collection</span><span class="p">(</span><span class="s1">&#39;bn_deciders&#39;</span><span class="p">)}</span>
+<span class="n">feed_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">bn_deciders</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>During training the running statistics are updated, and batch statistics are used for normalization.
+During testing the running statistics are not updated, and running statistics are used for normalization.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tensor_in</strong> – (tf.Tensor) Input Tensor.</li>
+<li><strong>epsilon</strong> – (float) A float number to avoid being divided by 0.</li>
+<li><strong>decay</strong> – (float) For exponential decay estimate of running mean and variance.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">(tf.Tensor) Tensor with variance bounded by a unit and mean of zero according to the batch.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tf_ops.batch_softmax_dist_loss">
+<code class="descclassname">tf_ops.</code><code class="descname">batch_softmax_dist_loss</code><span class="sig-paren">(</span><em>truth</em>, <em>h</em>, <em>dimension</em>, <em>scale_range=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#batch_softmax_dist_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.batch_softmax_dist_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function paired with a tensorflow optimizer is multinomial logistic regression.
+It is designed for cotegorical predictions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>truth</strong> – (tf.Tensor) A tensorflow vector tensor of integer class labels.</li>
+<li><strong>h</strong> – (tf.Tensor) A placeholder if doing simple multinomial logistic regression, or the output of some neural network.</li>
+<li><strong>dimension</strong> – (int) Number of classes in output distribution.</li>
+<li><strong>scale_range</strong> – (float) For scaling the weight matrices (by default weights are initialized two 1/sqrt(fan_in)) for tanh activation and sqrt(2/fan_in) for relu activation.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">(tf.Tensor, shape = [MB, Sequence_length]) Cross-entropy of true distribution vs. predicted distribution.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tf_ops.bidir_lm_rnn">
+<code class="descclassname">tf_ops.</code><code class="descname">bidir_lm_rnn</code><span class="sig-paren">(</span><em>x</em>, <em>t</em>, <em>token_embed</em>, <em>layers</em>, <em>seq_len=None</em>, <em>context_vector=None</em>, <em>cell=&lt;class 'tensorflow.python.ops.rnn_cell_impl.BasicLSTMCell'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#bidir_lm_rnn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.bidir_lm_rnn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Token level bidirectional LSTM language model that uses a sentence level context vector.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> – Input to rnn</li>
+<li><strong>t</strong> – Targets for language model predictions (typically next token in sequence)</li>
+<li><strong>token_embed</strong> – (tensor) MB X ALPHABET_SIZE.</li>
+<li><strong>layers</strong> – A list of hidden layer sizes for stacked lstm</li>
+<li><strong>seq_len</strong> – A 1D tensor of mini-batch size for variable length sequences</li>
+<li><strong>context_vector</strong> – (tensor) MB X 2*CONTEXT_LSTM_OUTPUT_DIM. Optional context to append to each token embedding</li>
+<li><strong>cell</strong> – (class) A tensorflow RNNCell sub-class</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">(tensor) tuple-token_losses , (list of tensors) hidden_states, (tensor) final_hidden</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tf_ops.diag_mvn_loss">
+<code class="descclassname">tf_ops.</code><code class="descname">diag_mvn_loss</code><span class="sig-paren">(</span><em>truth</em>, <em>h</em>, <em>scale_range=1.0</em>, <em>variance_floor=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#diag_mvn_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.diag_mvn_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes the output of a neural network after it’s last activation, performs an affine transform.
+It returns the mahalonobis distances between the targets and the result of the affine transformation, according
+to a parametrized Normal distribution with diagonal covariance. The log of the determinant of the parametrized
+covariance matrix is meant to be minimized to avoid a trivial optimization.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>truth</strong> – (tf.Tensor) The targets for this minibatch.</li>
+<li><strong>h</strong> – (tf.Tensor) The output of dnn. (Here the output of dnn , h, is assumed to be the same dimension as truth)</li>
+<li><strong>scale_range</strong> – (float) For scaling the weight matrices (by default weights are initialized two 1/sqrt(fan_in)) for tanh activation and sqrt(2/fan_in) for relu activation.</li>
+<li><strong>variance_floor</strong> – (float, positive) To ensure model doesn’t find trivial optimization.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">(tf.Tensor shape=[MB X D], tf.Tensor shape=[MB X 1]) Loss matrix, log_of_determinants of covariance matrices.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tf_ops.dnn">
+<code class="descclassname">tf_ops.</code><code class="descname">dnn</code><span class="sig-paren">(</span><em>x, layers=[100, 408], act=&lt;function relu&gt;, scale_range=1.0, norm=None, keep_prob=None, name='nnet'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#dnn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.dnn" title="Permalink to this definition">¶</a></dt>
+<dd><p>An arbitrarily deep neural network. Output has non-linear activation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> – (tf.tensor) Input to the network.</li>
+<li><strong>layers</strong> – List of integer sizes of network layers.</li>
+<li><strong>act</strong> – Activation function to produce hidden layers of neural network.</li>
+<li><strong>scale_range</strong> – (float) Scaling factor for initial range of weights (Set to 1/sqrt(fan_in) for tanh, sqrt(2/fan_in) for relu.</li>
+<li><strong>norm</strong> – Normalization function. Could be layer_norm or other function that retains shape of tensor.</li>
+<li><strong>keep_prob</strong> – (float) The percent of nodes to keep in dropout layers.</li>
+<li><strong>name</strong> – (str) For naming and variable scope.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">(tf.Tensor) Output of neural net. This will be just following a non linear transform, so that final activation has not been applied.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tf_ops.dropout">
+<code class="descclassname">tf_ops.</code><code class="descname">dropout</code><span class="sig-paren">(</span><em>tensor_in</em>, <em>prob</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#dropout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.dropout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds dropout node.
+<a class="reference external" href="https://www.cs.toronto.edu/~hinton/absps/JMLRdropout.pdf">Dropout A Simple Way to Prevent Neural Networks from Overfitting</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tensor_in</strong> – Input tensor.</li>
+<li><strong>prob</strong> – The percent of units to keep.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Tensor of the same shape of <em>tensor_in</em>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tf_ops.eyed_mvn_loss">
+<code class="descclassname">tf_ops.</code><code class="descname">eyed_mvn_loss</code><span class="sig-paren">(</span><em>truth</em>, <em>h</em>, <em>scale_range=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#eyed_mvn_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.eyed_mvn_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function takes the output of a neural network after it’s last activation, performs an affine transform,
+and returns the squared error of this result and the target.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>truth</strong> – A tensor of target vectors.</li>
+<li><strong>h</strong> – The output of a neural network post activation.</li>
+<li><strong>scale_range</strong> – For scaling the weight matrices (by default weights are initialized two 1/sqrt(fan_in)) for</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>tanh activation and sqrt(2/fan_in) for relu activation.
+:return: (tf.Tensor[MB X D], None) squared_error, None</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tf_ops.fan_scale">
+<code class="descclassname">tf_ops.</code><code class="descname">fan_scale</code><span class="sig-paren">(</span><em>initrange</em>, <em>activation</em>, <em>tensor_in</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#fan_scale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.fan_scale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a scaling factor for weight initialization according to best practices.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>initrange</strong> – Scaling in addition to fan_in scale.</li>
+<li><strong>activation</strong> – A tensorflow non-linear activation function</li>
+<li><strong>tensor_in</strong> – Input tensor to layer of network to scale weights for.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">(float) scaling factor for weight initialization.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tf_ops.full_mvn_loss">
+<code class="descclassname">tf_ops.</code><code class="descname">full_mvn_loss</code><span class="sig-paren">(</span><em>truth</em>, <em>h</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#full_mvn_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.full_mvn_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes the output of a neural network after it’s last activation, performs an affine transform.
+It returns the mahalonobis distances between the targets and the result of the affine transformation, according
+to a parametrized Normal distribution. The log of the determinant of the parametrized
+covariance matrix is meant to be minimized to avoid a trivial optimization.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>truth</strong> – Actual datapoints to compare against learned distribution</li>
+<li><strong>h</strong> – output of neural network (after last non-linear transform)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">(tf.Tensor[MB X D], tf.Tensor[MB X 1]) Loss matrix, log_of_determinants of covariance matrices.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tf_ops.ident">
+<code class="descclassname">tf_ops.</code><code class="descname">ident</code><span class="sig-paren">(</span><em>tensor_in</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#ident"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.ident" title="Permalink to this definition">¶</a></dt>
+<dd><p>The identity function</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>tensor_in</strong> – Input to operation.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">tensor_in</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tf_ops.join_multivariate_inputs">
+<code class="descclassname">tf_ops.</code><code class="descname">join_multivariate_inputs</code><span class="sig-paren">(</span><em>feature_spec</em>, <em>specs</em>, <em>embedding_ratio</em>, <em>max_embedding</em>, <em>min_embedding</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#join_multivariate_inputs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.join_multivariate_inputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes placeholders for all input data, performs a lookup on an embedding matrix for each categorical feature,
+and concatenates the resulting real-valued vectors from individual features into a single vector for each data point in the batch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>feature_spec</strong> – A dict {categorical: [c1, c2, …, cp], continuous:[f1, f2, …,fk]
+which lists which features to use as categorical and continuous inputs to the model.
+c1, …, cp, f1, …,fk should match a key in specs.</li>
+<li><strong>specs</strong> – A python dict containing information about which indices in the incoming data point correspond to which features.
+Entries for continuous features list the indices for the feature, while entries for categorical features
+contain a dictionary- {‘index’: i, ‘num_classes’: c}, where i and c are the index into the datapoint, and number of distinct
+categories for the category in question.</li>
+<li><strong>embedding_ratio</strong> – Determines size of embedding vectors for each categorical feature: num_classes*embedding_ratio (within limits below)</li>
+<li><strong>max_embedding</strong> – A limit on how large an embedding vector can be.</li>
+<li><strong>min_embedding</strong> – A limit on how small an embedding vector can be.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A tuple (x, placeholderdict):
+(tensor with shape [None, Sum_of_lengths_of_all_continuous_feature_vecs_and_embedding_vecs],
+dict to store tf placeholders to pair with data, )</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tf_ops.layer_norm">
+<code class="descclassname">tf_ops.</code><code class="descname">layer_norm</code><span class="sig-paren">(</span><em>h</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#layer_norm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.layer_norm" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>h</strong> – (tensor) Hidden layer of neural network</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">(tensor) Hidden layer after layer_norm transform</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tf_ops.layer_norm_rnn">
+<code class="descclassname">tf_ops.</code><code class="descname">layer_norm_rnn</code><span class="sig-paren">(</span><em>inputs</em>, <em>initial_state=None</em>, <em>layers=(10</em>, <em>)</em>, <em>sequence_lengths=None</em>, <em>state_index=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#layer_norm_rnn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.layer_norm_rnn" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputs</strong> – A list with length the number of time steps of longest sequence in the batch. inputs contains
+matrices of shape=[num_sequences X feature_dimension]</li>
+<li><strong>initial_state</strong> – Initialized first hidden states. A  tuple of len(layers) tuples of cell and hidden state tensors</li>
+<li><strong>layers</strong> – list of number of nodes in each of stacked lstm layers</li>
+<li><strong>sequence_lengths</strong> – A vector of sequence lengths of size batch_size</li>
+<li><strong>state_index</strong> – If -1, last state is returned, if None all states are returned, if 1, second state is returned.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">hidden_states, current_state</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tf_ops.lm_rnn">
+<code class="descclassname">tf_ops.</code><code class="descname">lm_rnn</code><span class="sig-paren">(</span><em>x</em>, <em>t</em>, <em>token_embed</em>, <em>layers</em>, <em>seq_len=None</em>, <em>context_vector=None</em>, <em>cell=&lt;class 'tensorflow.python.ops.rnn_cell_impl.BasicLSTMCell'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#lm_rnn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.lm_rnn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Token level LSTM language model that uses a sentence level context vector.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> – (tensor) Input to rnn</li>
+<li><strong>t</strong> – (tensor) Targets for language model predictions (typically next token in sequence)</li>
+<li><strong>token_embed</strong> – (tensor) MB X ALPHABET_SIZE.</li>
+<li><strong>layers</strong> – A list of hidden layer sizes for stacked lstm</li>
+<li><strong>seq_len</strong> – A 1D tensor of mini-batch size for variable length sequences</li>
+<li><strong>context_vector</strong> – (tensor) MB X 2*CONTEXT_LSTM_OUTPUT_DIM. Optional context to append to each token embedding</li>
+<li><strong>cell</strong> – (class) A tensorflow RNNCell sub-class</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">(tuple) token_losses (tensor), hidden_states (list of tensors), final_hidden (tensor)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tf_ops.multivariate_loss">
+<code class="descclassname">tf_ops.</code><code class="descname">multivariate_loss</code><span class="sig-paren">(</span><em>h</em>, <em>loss_spec</em>, <em>placeholder_dict</em>, <em>variance_floor=0.01</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#multivariate_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.multivariate_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a multivariate loss according to loss_spec.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>h</strong> – Final hidden layer of dnn or rnn. (Post-activation)</li>
+<li><strong>loss_spec</strong> – <p>A tuple of 3-tuples of the form (input_name, loss_function, dimension) where
+input_name is the same as a target in datadict,</p>
+<blockquote>
+<div>loss_function takes two parameters, a target and prediction,
+and dimension is the dimension of the target.</div></blockquote>
+</li>
+<li><strong>placeholder_dict</strong> – A dictionary to store placeholder tensors for target values.</li>
+<li><strong>variance_floor</strong> – (float) Parameter for diag_mvn_loss.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Return loss_matrix:</th></tr>
+<tr class="field-even field"><td>&#160;</td><td class="field-body"><p class="first last">(MB X concatenated_feature_size Tensor) Contains loss for all contributors for each data point.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tf_ops.softmax_dist_loss">
+<code class="descclassname">tf_ops.</code><code class="descname">softmax_dist_loss</code><span class="sig-paren">(</span><em>truth</em>, <em>h</em>, <em>dimension</em>, <em>scale_range=1.0</em>, <em>U=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#softmax_dist_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.softmax_dist_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function paired with a tensorflow optimizer is multinomial logistic regression.
+It is designed for cotegorical predictions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>truth</strong> – A tensorflow vector tensor of integer class labels.</li>
+<li><strong>h</strong> – A placeholder if doing simple multinomial logistic regression, or the output of some neural network.</li>
+<li><strong>dimension</strong> – Number of classes in output distribution.</li>
+<li><strong>scale_range</strong> – For scaling the weight matrices (by default weights are initialized two 1/sqrt(fan_in)) for tanh activation and sqrt(2/fan_in) for relu activation.</li>
+<li><strong>U</strong> – Optional weight tensor (If you is not provided a new weight tensor is made)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">(Tensor[MB X 1]) Cross-entropy of true distribution vs. predicted distribution.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tf_ops.swapping_rnn">
+<code class="descclassname">tf_ops.</code><code class="descname">swapping_rnn</code><span class="sig-paren">(</span><em>inputs</em>, <em>initial_state=None</em>, <em>layers=(10</em>, <em>)</em>, <em>sequence_lengths=None</em>, <em>state_index=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#swapping_rnn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.swapping_rnn" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputs</strong> – A list with length the number of time steps of longest sequence in the batch. inputs contains
+matrices of shape=[num_sequences X feature_dimension]</li>
+<li><strong>initial_state</strong> – Initialized first hidden states. A  tuple of len(layers) tuples of cell and hidden state tensors</li>
+<li><strong>layers</strong> – list of number of nodes in each of stacked lstm layers</li>
+<li><strong>sequence_lengths</strong> – A vector of sequence lengths of size batch_size</li>
+<li><strong>state_index</strong> – If -1, last state is returned, if None all states are returned, if 1, second state is returned.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tf_ops.true_bptt_rnn">
+<code class="descclassname">tf_ops.</code><code class="descname">true_bptt_rnn</code><span class="sig-paren">(</span><em>cell</em>, <em>inputs</em>, <em>initial_state=None</em>, <em>dtype=None</em>, <em>sequence_length=None</em>, <em>scope=None</em>, <em>state_index=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#true_bptt_rnn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.true_bptt_rnn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a recurrent neural network specified by RNNCell <cite>cell</cite>.
+The simplest form of RNN network generated is:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span>  <span class="n">state</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">zero_state</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+  <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+  <span class="k">for</span> <span class="n">input_</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
+      <span class="n">output</span><span class="p">,</span> <span class="n">state</span> <span class="o">=</span> <span class="n">cell</span><span class="p">(</span><span class="n">input_</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+      <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+<span class="k">return</span> <span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>However, a few other options are available:
+An initial state can be provided.
+If the sequence_length vector is provided, dynamic calculation is performed.
+This method of calculation does not compute the RNN steps past the maximum
+sequence length of the minibatch (thus saving computational time),
+and properly propagates the state at an example’s sequence length
+to the final state output.
+The dynamic calculation performed is, at time t for batch row b,</p>
+<div class="code highlight-default"><div class="highlight"><pre><span></span>(output, state)(b, t) = (t &gt;= sequence_length(b)) ? (zeros(cell.output_size), states(b, sequence_length(b) - 1)) : cell(input(b, t), state(b, t - 1))
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>cell</strong> – An instance of RNNCell.</li>
+<li><strong>inputs</strong> – A length T list of inputs, each a tensor of shape
+[batch_size, input_size].</li>
+<li><strong>initial_state</strong> – (optional) An initial state for the RNN.
+If <cite>cell.state_size</cite> is an integer, this must be
+a tensor of appropriate type and shape <cite>[batch_size x cell.state_size]</cite>.
+If <cite>cell.state_size</cite> is a tuple, this should be a tuple of
+tensors having shapes <cite>[batch_size, s] for s in cell.state_size</cite>.</li>
+<li><strong>dtype</strong> – (optional) The data type for the initial state.  Required if
+initial_state is not provided.</li>
+<li><strong>sequence_length</strong> – Specifies the length of each sequence in inputs.
+An int32 or int64 vector (tensor) size <cite>[batch_size]</cite>, values in <cite>[0, T)</cite>.</li>
+<li><strong>scope</strong> – VariableScope for the created subgraph; defaults to “RNN”.</li>
+<li><strong>state_index</strong> – (int) If -1 final state is returned, if 1 state after first rnn step is returned. If anything else
+all states are returned</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><p>A pair (outputs, state) where:</p>
+<ul class="simple">
+<li>outputs is a length T list of outputs (one for each input)</li>
+<li>state is the final state or a a length T list of cell states</li>
+</ul>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raise:</th><td class="field-body"><p class="first">TypeError: If <cite>cell</cite> is not an instance of RNNCell.
+ValueError: If <cite>inputs</cite> is <cite>None</cite> or an empty list, or if the input depth</p>
+<blockquote class="last">
+<div><p>(column size) cannot be inferred from inputs via shape inference.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="tf_ops.weights">
+<code class="descclassname">tf_ops.</code><code class="descname">weights</code><span class="sig-paren">(</span><em>distribution</em>, <em>shape</em>, <em>dtype=tf.float32</em>, <em>initrange=1e-05</em>, <em>seed=None</em>, <em>l2=0.0</em>, <em>name='weights'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tf_ops.html#weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tf_ops.weights" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper parameterizing common constructions of tf.Variables.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>distribution</strong> – A string identifying distribution ‘tnorm’ for truncated normal, ‘rnorm’ for random normal, ‘constant’ for constant, ‘uniform’ for uniform.</li>
+<li><strong>shape</strong> – Shape of weight tensor.</li>
+<li><strong>dtype</strong> – dtype for weights</li>
+<li><strong>initrange</strong> – Scales standard normal and trunctated normal, value of constant dist., and range of uniform dist. [-initrange, initrange].</li>
+<li><strong>seed</strong> – For reproducible results.</li>
+<li><strong>l2</strong> – Floating point number determining degree of of l2 regularization for these weights in gradient descent update.</li>
+<li><strong>name</strong> – For variable scope.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A tf.Variable.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="batch.html" class="btn btn-neutral float-right" title="batch" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Authors" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Batelle Memorial Institute.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.01',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
