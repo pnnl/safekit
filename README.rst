@@ -80,6 +80,8 @@ The tests range over many different model configurations and can be used as a so
 
 Documentation
 --------------
+`Github hosted documentation`_
 
-Docs can be read locally by opening safekit/docs/_build/html/index.html with a browser.
+.. _Github hosted documentation: https://pnnl.github.io/safekit/
+Docs can be read locally from the cloned repo by opening safekit/docs/_build/html/index.html with a browser.
 
