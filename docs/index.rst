@@ -20,6 +20,9 @@ Authors
 - Elliot Skomski (elliottskomski@gmail.com)
 - Sam Kaplan (samuelpkaplan@gmail.com)
 - Brian Hutchinson (brian.hutchinson@wwu.edu)
+- Nicole Nichols (nicole.nichols@pnnl.gov)
+- Sean Robinson (greatblondelf@gmail.com)
+- Rob Jasper (robert.jasper@pnnl.gov)
 
 About Safekit
 =============
