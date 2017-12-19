@@ -10,7 +10,7 @@
 
 
 Authors
-=======s
+=======
 
 - Aaron Tuor (aaron.tuor@pnnl.gov)
 - Ryan Baerwolf (rdbaerwolf@gmail.com)
