@@ -187,7 +187,7 @@ These should be used in conjunction with dnn_agg.py and lstm_agg.py. These are p
 <div class="highlight-bash"><div class="highlight"><pre><span></span>$ tar -xjvf safekit/safekit/features/cert/cert_aggregate_features.tar.bz2
 $ <span class="nb">cd</span> safekit/safekit/models/
 $ python dnn_agg.py safekit/safekit/features/cert/cert_aggregate_features.txt output.txt ../features/specs/agg/cert_all_in_all_out_agg.json -skipheader
-$ python dnn_agg.py safekit/safekit/features/cert/cert_aggregate_features.txt output.txt ../features/specs/agg/cert_all_in_all_out_agg.json -skipheader
+$ python lstm_agg.py safekit/safekit/features/cert/cert_aggregate_features.txt output.txt ../features/specs/agg/cert_all_in_all_out_agg.json -skipheader
 </pre></div>
 </div>
 <p>Our legal department wants this included:</p>
