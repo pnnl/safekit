@@ -1,5 +1,0 @@
-{"sentence_length": 31, 
-    "token_set_size": 23773, 
-    "num_days": 30, 
-    "test_files": ["0head.txt", "1head.txt", "2head.txt"], 
-	"weekend_days": []}
