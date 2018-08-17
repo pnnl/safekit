@@ -64,7 +64,7 @@ From the terminal in your activated virtual environment:
 
 .. code-block::
 
-    (venv)$ git clone https:/github.com/hutchresearch/safekit.git
+    (venv)$ git clone https:/github.com/pnnl/safekit.git
     (venv)$ cd safekit/
     (venv)$ python setup.py develop
 
