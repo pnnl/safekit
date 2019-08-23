@@ -753,12 +753,12 @@ class NormalizingReplayOnlineBatcher:
         self.mean = self.alpha * self.mean + (1 - self.alpha) * batchmean
         self.variance = self.alpha * self.variance + (1 - self.alpha) * batchvariance
         self.index += self.batch_size
-        data[:, self.datastart_index:] = (data[:, self.datastart_index:] - self.mean)/(self.variance + 1e-10)
-
+        
         if not initialize:
             replace_idxs = np.random.choice(range(self.pool_size), size=self.num_new)
             new_recruits_idxs = np.random.choice(range(data.shape[0]), size=self.num_new)
             self.pool[replace_idxs] = data[new_recruits_idxs]
             self.index += self.batch_size
+        data[:, self.datastart_index:] = (data[:, self.datastart_index:] - self.mean)/(self.variance + 1e-10)
         self.replay = False
         return data
