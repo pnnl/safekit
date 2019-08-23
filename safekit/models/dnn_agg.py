@@ -203,7 +203,7 @@ if __name__ == '__main__':
         data = NormalizingReplayOnlineBatcher(args.datafile, args.mb, skipheader=args.skipheader,
                                               refresh_ratio=args.refresh_ratio, ratio=tuple(args.ratio),
                                               pool_size=args.pool_size, delimiter=args.delimiter,
-                                              datastart_index=datastart_index)
+                                              alpha=args.alpha,datastart_index=datastart_index)
     
     feature_spec = make_feature_spec(dataspecs)
     x, ph_dict = join_multivariate_inputs(feature_spec, dataspecs,
