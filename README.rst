@@ -61,12 +61,23 @@ A virtual environment is recommended for installation. Make sure that tensorflow
 `Install tensorflow`_
 
 From the terminal in your activated virtual environment:
+Follow instructions to install TF:
+https://github.com/tensorflow/tensorflow/blob/r0.12/tensorflow/g3doc/get_started/os_setup.md
+
+conda env
 
 .. code-block::
 
-    (venv)$ git clone https:/github.com/pnnl/safekit.git
-    (venv)$ cd safekit/
-    (venv)$ python setup.py develop
+   $ conda create -n safekit python=2.7
+   $ (safekit) source activate safekit
+   # CPU
+   (safekit) $ export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.12.0-cp27-none-linux_x86_64.whl
+   # GPU
+   (safekit) $ export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow_gpu-1.12.0-cp27-none-linux_x86_64.whl
+   (safekit) $ pip install --ignore-installed --upgrade $TF_BINARY_URL
+   (safekit) $ git clone https:/github.com/pnnl/safekit.git
+   (safekit)) $ cd safekit/
+   (safekit) $ python setup.py develop
 
 To test your installation, from the top level directory run:
 
